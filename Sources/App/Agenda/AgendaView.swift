@@ -15,9 +15,15 @@ struct AgendaView: View {
         return (0..<7).compactMap { cal.date(byAdding: .day, value: $0, to: start) }
     }
 
+    @State private var draft = ""
+    @FocusState private var inputFocused: Bool
+
     private var occurrences: [EventOccurrence] { store.occurrences(on: selectedDay) }
-    private var dayTasks: [TapeEntry] {
-        store.entries(on: selectedDay).filter { $0.kind == .task }
+
+    /// Tout ce que le rouleau porte ce jour-là : on écrit depuis l'agenda,
+    /// on doit donc y voir ce qu'on vient d'écrire.
+    private var dayEntries: [TapeEntry] {
+        store.entries(on: selectedDay).filter { $0.isOnRoll && $0.kind != .event }
     }
 
     var body: some View {
@@ -50,6 +56,8 @@ struct AgendaView: View {
                             .frame(width: 34, height: 34)
                             .background(Circle().fill(Ink.amber))
                     }
+                    .accessibilityIdentifier("agenda.nouveau")
+                    .accessibilityLabel("Nouveau rendez-vous")
                 }
                 .buttonStyle(.plain)
             }
@@ -61,7 +69,7 @@ struct AgendaView: View {
 
             ScrollView {
                 VStack(spacing: 10) {
-                    if occurrences.isEmpty && dayTasks.isEmpty {
+                    if occurrences.isEmpty && dayEntries.isEmpty {
                         EmptyDay(day: selectedDay)
                     }
 
@@ -75,44 +83,64 @@ struct AgendaView: View {
                         }
                     }
 
-                    if !dayTasks.isEmpty {
+                    if !dayEntries.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("ACTIONS DU ROULEAU")
+                            Text("SUR LE ROULEAU")
                                 .font(Type.micro).tracking(1.4)
                                 .foregroundStyle(Ink.textFaint)
                                 .padding(.horizontal, 4)
-                            ForEach(dayTasks) { task in
-                                Button {
-                                    withAnimation(.snappy) { store.toggleDone(entryID: task.id) }
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: task.done ? "checkmark.square.fill" : "square")
-                                            .foregroundStyle(task.done ? Ink.moss : Ink.textFaint)
-                                        Text(task.text)
-                                            .font(Type.ui(13))
-                                            .strikethrough(task.done, color: Ink.textFaint)
-                                            .foregroundStyle(task.done ? Ink.textFaint : Ink.paper)
-                                        Spacer(minLength: 0)
-                                    }
-                                    .padding(12)
-                                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(Ink.chassisSoft))
-                                }
-                                .buttonStyle(.plain)
+                            ForEach(dayEntries) { entry in
+                                AgendaTapeRow(entry: entry,
+                                              currency: store.settings.currencySymbol)
                             }
                         }
                     }
 
-                    Color.clear.frame(height: 70)
+                    Color.clear.frame(height: 12)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
+                .animation(.snappy(duration: 0.25), value: dayEntries.count)
             }
+            .scrollDismissesKeyboard(.interactively)
+
+            SmartBar(text: $draft,
+                     showKeypad: .constant(false),
+                     focused: $inputFocused,
+                     onSubmit: print,
+                     placeholder: barPlaceholder,
+                     showsKeypadToggle: false,
+                     reference: referenceDate)
+
+            Color.clear.frame(height: 62) // place pour la barre d'onglets
         }
         .background(Ink.chassis)
         .sheet(item: $editing) { event in
             EventEditor(event: event).environment(store)
         }
+    }
+
+    // MARK: - Saisie
+
+    /// Le jour visé sert de repère à l'analyse : sur un jour à venir, « 9h »
+    /// désigne neuf heures ce jour-là.
+    private var referenceDate: Date {
+        Calendar.current.isDateInToday(selectedDay) ? Date() : selectedDay
+    }
+
+    private var barPlaceholder: String {
+        Calendar.current.isDateInToday(selectedDay)
+            ? "Ajouter aujourd’hui…"
+            : "Ajouter au \(Fmt.dayShort.string(from: selectedDay))…"
+    }
+
+    private func print() {
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        if store.submit(text, on: selectedDay) != nil {
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        }
+        draft = ""
     }
 
     /// Nombre d'événements par jour, pour les points sous la bande de semaine.
@@ -255,7 +283,7 @@ struct EventRow: View {
                         .foregroundStyle(Ink.textFaint)
                 }
             }
-            .frame(width: 48)
+            .frame(width: Type.gutter(50))
 
             RoundedRectangle(cornerRadius: 2)
                 .fill(Ink.label(event.colorIndex))
@@ -305,6 +333,68 @@ struct EventRow: View {
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+    }
+}
+
+/// Une ligne du rouleau vue depuis l'agenda : plus compacte que sur la bande,
+/// mais on peut cocher une action sans changer d'écran.
+struct AgendaTapeRow: View {
+    let entry: TapeEntry
+    let currency: String
+    @Environment(Store.self) private var store
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Group {
+                switch entry.kind {
+                case .task:
+                    Image(systemName: entry.done ? "checkmark.square.fill" : "square")
+                        .foregroundStyle(entry.done ? Ink.moss : Ink.textFaint)
+                case .calc:
+                    Image(systemName: "equal.square").foregroundStyle(Ink.amber)
+                case .subtotal:
+                    Image(systemName: "sum").foregroundStyle(Ink.amber)
+                default:
+                    Image(systemName: "text.alignleft").foregroundStyle(Ink.textFaint)
+                }
+            }
+            .font(.system(size: 14, weight: .medium))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.kind == .calc ? (entry.expression ?? "") : entry.text)
+                    .font(Type.ui(13))
+                    .strikethrough(entry.done, color: Ink.textFaint)
+                    .foregroundStyle(entry.done ? Ink.textFaint : Ink.paper)
+                    .multilineTextAlignment(.leading)
+                if !entry.tags.isEmpty {
+                    Text(entry.tags.map { "#\($0)" }.joined(separator: " "))
+                        .font(Type.ui(10, weight: .medium))
+                        .foregroundStyle(Ink.amberDeep)
+                }
+            }
+
+            Spacer(minLength: 4)
+
+            if let value = entry.value {
+                Text(NumberStyleFR.money(value, symbol: entry.kind == .calc ? "" : currency))
+                    .font(Type.tape(12, weight: .semibold))
+                    .foregroundStyle(value < 0 ? Ink.rouge : Ink.textSoft)
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Ink.chassisSoft))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard entry.kind == .task else { return }
+            withAnimation(.snappy) { store.toggleDone(entryID: entry.id) }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+        .contextMenu {
+            Button(role: .destructive) {
+                withAnimation { store.delete(entryID: entry.id) }
+            } label: { Label("Supprimer", systemImage: "trash") }
+        }
     }
 }
 

@@ -53,6 +53,47 @@ check("note chiffrée", intent("essence 62,30"), "note « essence » · 62,3")
 let tagged = SmartInput.parse("courses 41,15 #maison", reference: ref)!
 check("étiquettes", tagged.tags.joined(separator: ","), "maison")
 
+print("\n── Marées : détection des étales ──")
+
+func series(_ heights: [Double]) -> [TideDay.TideSample] {
+    let start = Date(timeIntervalSince1970: 0)
+    return heights.enumerated().map {
+        .init(date: start.addingTimeInterval(Double($0.offset) * 3600), height: $0.element)
+    }
+}
+func describe(_ marks: [TideMark]) -> String {
+    marks.map { "\($0.isHigh ? "PM" : "BM")@\(Int($0.date.timeIntervalSince1970) / 3600)h" }
+        .joined(separator: " ")
+}
+
+// Une marée franche : une basse mer, une pleine mer.
+check("étales simples",
+      describe(TideService.extrema(from: series([1, 0, -1, -2, -1, 0, 1, 2, 1, 0]))),
+      "BM@3h PM@7h")
+
+// Étale « plate » : deux relevés horaires à la même hauteur. Sans
+// dédoublonnage, la basse mer était détectée — et affichée — deux fois.
+check("étale plate comptée une seule fois",
+      describe(TideService.extrema(from: series([1, 0, -2, -2, 0, 1, 2, 1]))),
+      "BM@2h PM@6h")
+
+check("plateau au sommet",
+      describe(TideService.extrema(from: series([0, 1, 2, 2, 1, 0]))),
+      "PM@2h")
+
+// Marnage : sur la journée affichée, pas sur toute la période récupérée.
+var day = TideDay()
+let midnight = Calendar.current.startOfDay(for: Date())
+day.marks = [
+    TideMark(date: midnight.addingTimeInterval(5 * 3600), height: -2.21, isHigh: false),
+    TideMark(date: midnight.addingTimeInterval(11 * 3600), height: 1.24, isHigh: true),
+    TideMark(date: midnight.addingTimeInterval(18 * 3600), height: -2.02, isHigh: false),
+    // Le lendemain, plus creux : ne doit pas gonfler le marnage du jour.
+    TideMark(date: midnight.addingTimeInterval(30 * 3600), height: -2.77, isHigh: false)
+]
+check("marnage du jour affiché",
+      String(format: "%.2f", day.range(on: midnight) ?? 0), "3.45")
+
 print("\n── Astronomie (Brest, 7 août 2026) ──")
 let sun = Astro.sunTimes(date: ref, lat: 48.3833, lon: -4.4950)
 let hm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "fr_FR")

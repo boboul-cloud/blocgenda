@@ -3,9 +3,43 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [1.1] — 2026-08-07
 
-Rien pour l'instant.
+### Ajouté
+
+- **Saisie depuis l'agenda.** La barre unique est désormais présente sur l'écran
+  Agenda et écrit dans **le jour sélectionné**, pas dans aujourd'hui. Sur un jour
+  à venir, « 9h » désigne neuf heures ce jour-là, sans basculer au lendemain
+  comme le ferait une heure déjà passée. Ce qui est écrit apparaît aussitôt sous
+  les rendez-vous, dans une section « Sur le rouleau » où les actions se cochent.
+- **Portsall** (Finistère) rejoint les ports de référence, avec Le Conquet et
+  l'Aber-Wrac'h.
+- Le naufrage de l'Amoco Cadiz sur les roches de Portsall entre dans
+  l'éphéméride du 16 mars.
+- Une cible de **tests d'interface** qui pilote réellement l'application, et des
+  identifiants d'accessibilité sur les commandes principales — utiles aussi à
+  VoiceOver.
+
+### Modifié
+
+- **Typographie agrandie de 18 %** sur toute l'application, gouttières et
+  colonnes chiffrées comprises. L'app suit en plus le réglage « Taille du texte »
+  d'iOS, dans une limite qui préserve l'alignement des colonnes de la bande.
+  Le widget garde sa taille : ses gabarits sont imposés par le système.
+
+### Corrigé
+
+- **Marée dupliquée** : une étale étalée sur deux relevés horaires de même
+  hauteur était détectée — et affichée — deux fois. Les étales de même sens
+  séparées de moins de trois heures sont maintenant fusionnées.
+- **Marnage incohérent** : la valeur affichée portait sur toute la période
+  récupérée (quatre jours) et non sur la journée montrée, si bien qu'elle ne
+  correspondait à aucune des heures listées juste au-dessus.
+- Un décompte de marée à moins d'une minute affichait « dans 0 min » ; il dit
+  désormais « maintenant ».
+- Retrait de deux déclarations sans usage dans l'`Info.plist` — l'autorisation
+  d'accès aux contacts et le mode d'actualisation en arrière-plan — qu'Apple
+  refuse quand rien ne les justifie dans le code.
 
 ## [1.0] — 2026-08-07
 

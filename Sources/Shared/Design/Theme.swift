@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Charte graphique : une machine à écrire moderne. Un châssis sombre et mat,
 /// une bande de papier chaude qui court dedans, deux accents — l'ambre de
@@ -48,12 +49,36 @@ extension Color {
 
 /// Typographie : le rouleau est imprimé en chasse fixe, l'interface en rond.
 enum Type {
+
+#if WIDGET
+    /// Le widget vit dans un gabarit imposé : sa typographie ne bouge pas,
+    /// sous peine de déborder du cadre que lui donne le système.
+    static let scale: CGFloat = 1
+
+    static func resolve(_ base: CGFloat) -> CGFloat { base }
+#else
+    /// Grossissement de base. Le rouleau se lit souvent d'une main, de loin,
+    /// parfois en plein soleil : la lisibilité prime sur la densité.
+    static let scale: CGFloat = 1.18
+
+    /// Suit en plus le réglage « Taille du texte » d'iOS, mais de façon bornée :
+    /// au-delà, les colonnes chiffrées de la bande ne s'aligneraient plus.
+    static func resolve(_ base: CGFloat) -> CGFloat {
+        let enlarged = base * scale
+        return min(UIFontMetrics.default.scaledValue(for: enlarged), enlarged * 1.35)
+    }
+#endif
+
     static func tape(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        .system(size: resolve(size), weight: weight, design: .monospaced)
     }
     static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        .system(size: resolve(size), weight: weight, design: .rounded)
     }
+
+    /// Largeur d'une gouttière ou d'une colonne fixe, grossie comme le texte
+    /// qu'elle doit contenir.
+    static func gutter(_ base: CGFloat) -> CGFloat { resolve(base) }
 
     static let display = ui(30, weight: .bold)
     static let title = ui(19, weight: .semibold)
@@ -285,9 +310,10 @@ enum Fmt {
         return m == 0 ? "\(h) h" : "\(h) h \(String(format: "%02d", m))"
     }
 
-    /// « dans 2 h 15 » / « il y a 40 min »
+    /// « dans 2 h 15 » / « il y a 40 min » / « maintenant »
     static func relative(_ date: Date, from now: Date = Date()) -> String {
         let delta = date.timeIntervalSince(now)
+        guard abs(delta) >= 60 else { return "maintenant" }
         let magnitude = duration(abs(delta))
         return delta >= 0 ? "dans \(magnitude)" : "il y a \(magnitude)"
     }

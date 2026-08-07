@@ -58,6 +58,31 @@ jobs:
             exit 1
           fi
 
+  interface:
+    name: Tests d'interface (parcours de saisie)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer XcodeGen
+        run: brew install xcodegen
+
+      - name: Générer le projet
+        run: xcodegen generate
+
+      - name: Piloter l'application
+        run: |
+          DEVICE=$(xcrun simctl list devices available --json \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; \
+              print(next(x['udid'] for v in d.values() for x in v if 'iPhone' in x['name']))")
+          echo "Simulateur : $DEVICE"
+          xcodebuild test \
+            -project Blocgenda.xcodeproj \
+            -scheme Blocgenda \
+            -destination "id=$DEVICE" \
+            CODE_SIGNING_ALLOWED=NO \
+            -only-testing:BlocgendaUITests
+
   icone:
     name: Icône 1024 sans canal alpha
     runs-on: macos-15

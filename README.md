@@ -86,7 +86,11 @@ le **clavier de calculatrice** (`C`, parenthèses, `%`, `TVA`, `TOTAL`).
 Bande des sept jours (points de densité sous chaque date, balayage pour changer
 de semaine), liste de la journée, récurrences (quotidien, jours ouvrés,
 hebdomadaire, quinzaine, mensuel, annuel), rappels multiples, couleur, lieu,
-rattachement à un contact. Les actions du rouleau du jour apparaissent dessous.
+rattachement à un contact.
+
+**La barre unique est aussi présente ici**, et écrit dans le jour sélectionné :
+sur un jour à venir, « 9h » désigne neuf heures ce jour-là. Ce qu'on écrit
+apparaît sous les rendez-vous, dans une section « Sur le rouleau ».
 
 ### 4. Annuaire
 
@@ -151,6 +155,14 @@ lancer le simulateur :
 
 ```bash
 ./Tools/run-engine-tests.sh
+```
+
+Piloter réellement l'application (parcours de saisie, agenda) :
+
+```bash
+xcodebuild test -project Blocgenda.xcodeproj -scheme Blocgenda \
+  -destination 'name=iPhone 17' CODE_SIGNING_ALLOWED=NO \
+  -only-testing:BlocgendaUITests
 ```
 
 Régénérer l'icône :

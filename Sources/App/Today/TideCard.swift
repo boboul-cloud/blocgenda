@@ -181,7 +181,7 @@ struct TideCard: View {
                 Pill(text: springNeapLabel, color: Ink.violet)
             }
             Spacer(minLength: 0)
-            if let range = tide?.range {
+            if let range = tide?.range(on: now) {
                 Text(String(format: "marnage %.2f m", range))
                     .font(Type.ui(10.5, weight: .medium))
                     .foregroundStyle(Ink.textFaint)

@@ -222,13 +222,31 @@ final class Store {
 
     // MARK: - Saisie unifiée
 
-    /// Point d'entrée de la barre du rouleau : une ligne de texte devient
-    /// calcul, action, rendez-vous ou note selon ce qu'elle contient.
+    /// Point d'entrée de la barre : une ligne de texte devient calcul, action,
+    /// rendez-vous ou note selon ce qu'elle contient.
+    ///
+    /// `day` est le jour visé — celui que l'agenda a sélectionné. Il sert à la
+    /// fois d'ancrage pour la ligne et de repère pour l'analyse : sur un jour à
+    /// venir, « 8h » désigne huit heures **ce jour-là**, sans basculer au
+    /// lendemain comme le ferait une heure déjà passée aujourd'hui.
     @discardableResult
-    func submit(_ raw: String) -> TapeEntry? {
-        guard let parsed = SmartInput.parse(raw) else { return nil }
+    func submit(_ raw: String, on day: Date? = nil) -> TapeEntry? {
+        let cal = Calendar.current
+        let target = day.map { cal.startOfDay(for: $0) }
+        let isToday = target.map { cal.isDateInToday($0) } ?? true
+        let reference = isToday ? Date() : (target ?? Date())
+
+        guard let parsed = SmartInput.parse(raw, reference: reference) else { return nil }
         var entry = TapeEntry()
         entry.tags = parsed.tags
+        if !isToday, let target {
+            // La ligne se range à l'heure qu'il est, mais le jour choisi.
+            let now = cal.dateComponents([.hour, .minute, .second], from: Date())
+            entry.date = cal.date(bySettingHour: now.hour ?? 12,
+                                  minute: now.minute ?? 0,
+                                  second: now.second ?? 0,
+                                  of: target) ?? target
+        }
 
         switch parsed.intent {
         case .calculation(let expression, let value):

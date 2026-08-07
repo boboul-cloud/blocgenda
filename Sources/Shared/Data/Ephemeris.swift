@@ -252,6 +252,7 @@ enum HistoricalEvents {
         "03-04": ["1861 — Abraham Lincoln devient président des États-Unis."],
         "03-12": ["1989 — Tim Berners-Lee propose le projet qui deviendra le Web."],
         "03-15": ["-44 — Assassinat de Jules César aux ides de mars."],
+        "03-16": ["1978 — L’Amoco Cadiz s’échoue sur les roches de Portsall : la plus grande marée noire des côtes françaises."],
         "03-18": ["1871 — Début de la Commune de Paris."],
         "03-31": ["1889 — Inauguration de la tour Eiffel."],
         "04-04": ["1949 — Signature du traité de l’Atlantique Nord."],

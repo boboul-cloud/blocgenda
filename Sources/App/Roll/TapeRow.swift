@@ -13,7 +13,7 @@ struct TapeRow: View {
             Text(Fmt.hmShort.string(from: entry.date))
                 .font(Type.tape(9.5))
                 .foregroundStyle(Ink.textFaint)
-                .frame(width: 34, alignment: .leading)
+                .frame(width: Type.gutter(36), alignment: .leading)
                 .padding(.top, 2)
 
             content

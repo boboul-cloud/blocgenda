@@ -8,5 +8,7 @@ swiftc -O -o "$OUT/enginetests" \
   Sources/Shared/Engine/Calculator.swift \
   Sources/Shared/Engine/SmartInput.swift \
   Sources/Shared/Engine/Astronomy.swift \
+  Sources/Shared/Engine/Tides.swift \
+  Sources/Shared/Models/Place.swift \
   Tools/EngineTests/main.swift
 TZ=Europe/Paris "$OUT/enginetests"

@@ -115,6 +115,8 @@ struct TabBar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("onglet.\(tab.rawValue)")
+                .accessibilityLabel(tab.title)
             }
 
             Rectangle()

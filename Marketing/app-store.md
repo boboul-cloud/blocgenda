@@ -1,4 +1,4 @@
-# Fiche App Store — Blocgenda 1.0
+# Fiche App Store — Blocgenda 1.1
 
 Textes prêts à coller dans App Store Connect. Les limites de caractères indiquées
 sont celles d'Apple ; les compteurs ont été vérifiés.
@@ -121,7 +121,13 @@ Apple les indexe déjà.)*
 ## Nouveautés de cette version
 
 ```
-Première version de Blocgenda.
+• On peut maintenant écrire directement depuis l'agenda : la barre unique y
+  ajoute au jour que vous avez sélectionné.
+• Portsall, Le Conquet et l'Aber-Wrac'h rejoignent les ports de référence.
+• Toute la typographie a été agrandie, et l'app suit désormais le réglage
+  « Taille du texte » d'iOS.
+• Correction : une étale de marée pouvait s'afficher deux fois, et le marnage
+  annoncé ne portait pas sur la journée montrée.
 ```
 
 ---

@@ -23,6 +23,9 @@ struct Place: Codable, Hashable, Identifiable, Sendable {
 enum ReferencePorts {
     static let all: [Place] = [
         Place(name: "Brest", latitude: 48.3833, longitude: -4.4950),
+        Place(name: "Portsall", latitude: 48.5639, longitude: -4.7139),
+        Place(name: "Le Conquet", latitude: 48.3600, longitude: -4.7700),
+        Place(name: "L’Aber-Wrac’h", latitude: 48.5970, longitude: -4.5620),
         Place(name: "Saint-Malo", latitude: 48.6493, longitude: -2.0257),
         Place(name: "Le Havre", latitude: 49.4830, longitude: 0.1050),
         Place(name: "Cherbourg", latitude: 49.6500, longitude: -1.6167),

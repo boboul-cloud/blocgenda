@@ -25,8 +25,18 @@ struct TideDay: Codable, Hashable, Sendable {
 
     var isEmpty: Bool { samples.isEmpty }
 
-    /// Marnage du jour : plus haute pleine mer − plus basse basse mer.
-    var range: Double? {
+    /// Marnage : plus haute pleine mer − plus basse basse mer, sur l'ensemble
+    /// de la période récupérée.
+    var range: Double? { Self.range(of: marks) }
+
+    /// Marnage d'une journée précise — celui qu'il faut afficher à côté des
+    /// marées de cette journée, sous peine d'annoncer un chiffre qui ne
+    /// correspond à aucune des heures listées.
+    func range(on day: Date) -> Double? {
+        Self.range(of: marks.filter { Calendar.current.isDate($0.date, inSameDayAs: day) })
+    }
+
+    private static func range(of marks: [TideMark]) -> Double? {
         guard let hi = marks.filter({ $0.isHigh }).map(\.height).max(),
               let lo = marks.filter({ !$0.isHigh }).map(\.height).min() else { return nil }
         return hi - lo
@@ -146,7 +156,26 @@ enum TideService {
             let date = samples[i].date.addingTimeInterval(shift * interval)
             marks.append(TideMark(date: date, height: peak, isHigh: isMax))
         }
-        return marks
+        return deduplicated(marks)
+    }
+
+    /// Une étale qui s'étale sur deux relevés horaires de même hauteur est
+    /// détectée deux fois. Or deux marées de même sens sont séparées d'environ
+    /// douze heures : tout doublon à moins de trois heures est un artefact.
+    /// On garde le plus marqué des deux.
+    static func deduplicated(_ marks: [TideMark]) -> [TideMark] {
+        var result: [TideMark] = []
+        for mark in marks.sorted(by: { $0.date < $1.date }) {
+            guard let last = result.last,
+                  last.isHigh == mark.isHigh,
+                  mark.date.timeIntervalSince(last.date) < 3 * 3600 else {
+                result.append(mark)
+                continue
+            }
+            let keepNew = mark.isHigh ? mark.height > last.height : mark.height < last.height
+            if keepNew { result[result.count - 1] = mark }
+        }
+        return result
     }
 
     /// Coefficient de marée estimé (échelle française 20–120) à partir du

@@ -22,7 +22,9 @@ struct EventEditor: View {
                 Section {
                     TextField("Intitulé", text: $draft.title)
                         .font(Type.ui(16, weight: .semibold))
+                        .accessibilityIdentifier("editeur.titre")
                     TextField("Lieu", text: $draft.place)
+                        .accessibilityIdentifier("editeur.lieu")
                     TextField("Notes", text: $draft.notes, axis: .vertical)
                         .lineLimit(1...5)
                 }
@@ -113,6 +115,7 @@ struct EventEditor: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier("editeur.enregistrer")
                 }
             }
             .confirmationDialog("Supprimer ce rendez-vous ?", isPresented: $showDeleteConfirm,

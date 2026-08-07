@@ -7,11 +7,17 @@ struct SmartBar: View {
     @Binding var showKeypad: Bool
     @FocusState.Binding var focused: Bool
     var onSubmit: () -> Void
+    /// Texte d'invite : il rappelle où la ligne va atterrir.
+    var placeholder: String = "Calcul, note, action, rendez-vous…"
+    /// Le clavier de calculatrice n'a de sens que sur le rouleau.
+    var showsKeypadToggle: Bool = true
+    /// Jour de référence pour l'aperçu — celui que l'agenda a sélectionné.
+    var reference: Date = Date()
 
     private var preview: SmartInput.Parsed? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count > 1 else { return nil }
-        return SmartInput.parse(trimmed)
+        return SmartInput.parse(trimmed, reference: reference)
     }
 
     var body: some View {
@@ -24,22 +30,29 @@ struct SmartBar: View {
             }
 
             HStack(spacing: 10) {
-                Button {
-                    withAnimation { showKeypad.toggle() }
-                    if showKeypad { focused = false }
-                } label: {
-                    Image(systemName: showKeypad ? "keyboard.chevron.compact.down" : "number.square")
-                        .font(.system(size: 19, weight: .medium))
-                        .foregroundStyle(showKeypad ? Ink.amber : Ink.textFaint)
-                        .frame(width: 38, height: 38)
+                if showsKeypadToggle {
+                    Button {
+                        withAnimation { showKeypad.toggle() }
+                        if showKeypad { focused = false }
+                    } label: {
+                        Image(systemName: showKeypad ? "keyboard.chevron.compact.down" : "number.square")
+                            .font(.system(size: 19, weight: .medium))
+                            .foregroundStyle(showKeypad ? Ink.amber : Ink.textFaint)
+                            .frame(width: 38, height: 38)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("barre.clavier")
+                    .accessibilityLabel("Clavier de calculatrice")
+                } else {
+                    Spacer(minLength: 6)
                 }
-                .buttonStyle(.plain)
 
                 TextField("", text: $text, axis: .vertical)
                     .placeholder(when: text.isEmpty) {
-                        Text("Calcul, note, action, rendez-vous…")
+                        Text(placeholder)
                             .font(Type.ui(14))
                             .foregroundStyle(Ink.textFaint)
+                            .lineLimit(1)
                     }
                     .font(Type.tape(14))
                     .foregroundStyle(Ink.paper)
@@ -48,6 +61,7 @@ struct SmartBar: View {
                     .autocorrectionDisabled()
                     .submitLabel(.send)
                     .onSubmit(onSubmit)
+                    .accessibilityIdentifier("barre.saisie")
 
                 Button(action: onSubmit) {
                     Image(systemName: "arrow.down.doc.fill")
@@ -60,6 +74,8 @@ struct SmartBar: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(text.isEmpty)
+                .accessibilityIdentifier("barre.valider")
+                .accessibilityLabel("Imprimer sur le rouleau")
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
