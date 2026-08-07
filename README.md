@@ -90,7 +90,8 @@ rattachement à un contact.
 
 **La barre unique est aussi présente ici**, et écrit dans le jour sélectionné :
 sur un jour à venir, « 9h » désigne neuf heures ce jour-là. Ce qu'on écrit
-apparaît sous les rendez-vous, dans une section « Sur le rouleau ».
+apparaît sous les rendez-vous, dans une section « Notes et actions » — les
+calculs, eux, restent sur la bande.
 
 ### 4. Annuaire
 

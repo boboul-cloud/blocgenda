@@ -3,6 +3,18 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
+## [1.2] — 2026-08-07
+
+### Modifié
+
+- **L'agenda ne montre plus les calculs.** La section du jour s'appelle
+  désormais « Notes et actions » et ne retient que cela : un calcul et un
+  sous-total ont leur place dans la colonne de chiffres du rouleau, pas dans
+  une journée. Écrire une opération depuis la barre de l'agenda continue de
+  fonctionner — elle part sur la bande, à la date du jour choisi, sans
+  encombrer la liste. Les pastilles de la bande des sept jours comptent la
+  même chose que ce qui est affiché.
+
 ## [1.1] — 2026-08-07
 
 ### Ajouté

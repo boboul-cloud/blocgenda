@@ -20,10 +20,19 @@ struct AgendaView: View {
 
     private var occurrences: [EventOccurrence] { store.occurrences(on: selectedDay) }
 
-    /// Tout ce que le rouleau porte ce jour-là : on écrit depuis l'agenda,
-    /// on doit donc y voir ce qu'on vient d'écrire.
+    /// Ce que l'agenda montre du rouleau : les actions et les notes du jour.
+    /// Les calculs et les sous-totaux restent sur la bande — leur place est
+    /// dans la colonne de chiffres, pas dans une journée.
     private var dayEntries: [TapeEntry] {
-        store.entries(on: selectedDay).filter { $0.isOnRoll && $0.kind != .event }
+        store.entries(on: selectedDay).filter(Self.belongsInAgenda)
+    }
+
+    static func belongsInAgenda(_ entry: TapeEntry) -> Bool {
+        guard entry.isOnRoll else { return false }
+        switch entry.kind {
+        case .task, .note: return true
+        case .calc, .subtotal, .memo, .event: return false
+        }
     }
 
     var body: some View {
@@ -85,7 +94,7 @@ struct AgendaView: View {
 
                     if !dayEntries.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("SUR LE ROULEAU")
+                            Text("NOTES ET ACTIONS")
                                 .font(Type.micro).tracking(1.4)
                                 .foregroundStyle(Ink.textFaint)
                                 .padding(.horizontal, 4)
@@ -148,7 +157,7 @@ struct AgendaView: View {
         var result: [Date: Int] = [:]
         for day in weekDays {
             result[day] = store.occurrences(on: day).count
-                + store.entries(on: day).filter { $0.kind == .task }.count
+                + store.entries(on: day).filter(Self.belongsInAgenda).count
         }
         return result
     }
@@ -336,8 +345,8 @@ struct EventRow: View {
     }
 }
 
-/// Une ligne du rouleau vue depuis l'agenda : plus compacte que sur la bande,
-/// mais on peut cocher une action sans changer d'écran.
+/// Une note ou une action du jour, vue depuis l'agenda : plus compacte que sur
+/// la bande, mais on peut cocher sans changer d'écran.
 struct AgendaTapeRow: View {
     let entry: TapeEntry
     let currency: String
@@ -346,22 +355,17 @@ struct AgendaTapeRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Group {
-                switch entry.kind {
-                case .task:
+                if entry.kind == .task {
                     Image(systemName: entry.done ? "checkmark.square.fill" : "square")
                         .foregroundStyle(entry.done ? Ink.moss : Ink.textFaint)
-                case .calc:
-                    Image(systemName: "equal.square").foregroundStyle(Ink.amber)
-                case .subtotal:
-                    Image(systemName: "sum").foregroundStyle(Ink.amber)
-                default:
+                } else {
                     Image(systemName: "text.alignleft").foregroundStyle(Ink.textFaint)
                 }
             }
             .font(.system(size: 14, weight: .medium))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.kind == .calc ? (entry.expression ?? "") : entry.text)
+                Text(entry.text)
                     .font(Type.ui(13))
                     .strikethrough(entry.done, color: Ink.textFaint)
                     .foregroundStyle(entry.done ? Ink.textFaint : Ink.paper)
@@ -376,7 +380,7 @@ struct AgendaTapeRow: View {
             Spacer(minLength: 4)
 
             if let value = entry.value {
-                Text(NumberStyleFR.money(value, symbol: entry.kind == .calc ? "" : currency))
+                Text(NumberStyleFR.money(value, symbol: currency))
                     .font(Type.tape(12, weight: .semibold))
                     .foregroundStyle(value < 0 ? Ink.rouge : Ink.textSoft)
             }

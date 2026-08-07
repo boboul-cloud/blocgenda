@@ -30,6 +30,18 @@ final class AgendaFlowTests: XCTestCase {
     /// Le suffixe est volontairement composé de lettres : un suffixe chiffré
     /// serait — à juste titre — interprété comme un montant par la barre, et
     /// la ligne s'afficherait amputée de son nombre.
+    /// Reproduit le formatage des montants de l'application, pour que les
+    /// assertions portent sur la chaîne réellement affichée.
+    static func montant(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.numberStyle = .decimal
+        f.minimumFractionDigits = 2
+        f.maximumFractionDigits = 2
+        f.usesGroupingSeparator = true
+        return f.string(from: NSNumber(value: value)) ?? String(value)
+    }
+
     private func uniqueTitle(_ prefix: String) -> String {
         let alphabet = Array("abcdefghijklmnopqrstuvwxyz")
         var n = Int(Date().timeIntervalSince1970) % (26 * 26 * 26)
@@ -103,6 +115,44 @@ final class AgendaFlowTests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts[texte].waitForExistence(timeout: 5),
                       "La ligne saisie depuis l'agenda n'apparaît pas.")
+    }
+
+    /// Un calcul saisi depuis l'agenda part sur la bande, mais n'encombre pas
+    /// la journée : sa place est dans la colonne de chiffres du rouleau.
+    func testUnCalculNApparaitPasDansLAgenda() throws {
+        openAgenda()
+
+        let barre = app.textViews["barre.saisie"].exists
+            ? app.textViews["barre.saisie"]
+            : app.textFields["barre.saisie"]
+        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+
+        barre.tap()
+        barre.typeText("1234 + 4321")
+        app.buttons["barre.valider"].tap()
+
+        // L'opération s'imprime telle quelle ; le résultat, lui, est mis en forme
+        // à la française — séparateur de milliers compris, qui n'est pas une
+        // espace ordinaire mais une espace fine insécable.
+        let operation = "1234 + 4321"
+        let resultat = Self.montant(5555)
+
+        func present(_ fragment: String) -> XCUIElement {
+            app.staticTexts.containing(
+                NSPredicate(format: "label CONTAINS %@", fragment)).firstMatch
+        }
+
+        XCTAssertFalse(present(resultat).waitForExistence(timeout: 3),
+                       "Le résultat d'un calcul ne doit pas s'afficher dans l'agenda.")
+        XCTAssertFalse(present(operation).exists,
+                       "L'opération ne doit pas s'afficher dans l'agenda.")
+
+        // Mais elle doit bien être arrivée sur le rouleau : rien n'est perdu.
+        app.buttons["onglet.roll"].tap()
+        XCTAssertTrue(present(operation).waitForExistence(timeout: 5),
+                      "Le calcul saisi depuis l'agenda devrait figurer sur le rouleau.")
+        XCTAssertTrue(present(resultat).exists,
+                      "Son résultat devrait figurer sur le rouleau.")
     }
 
     // MARK: - Le même parcours depuis le rouleau, pour comparaison

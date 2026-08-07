@@ -1,4 +1,4 @@
-# Fiche App Store — Blocgenda 1.1
+# Fiche App Store — Blocgenda 1.2
 
 Textes prêts à coller dans App Store Connect. Les limites de caractères indiquées
 sont celles d'Apple ; les compteurs ont été vérifiés.
@@ -128,6 +128,8 @@ Apple les indexe déjà.)*
   « Taille du texte » d'iOS.
 • Correction : une étale de marée pouvait s'afficher deux fois, et le marnage
   annoncé ne portait pas sur la journée montrée.
+• L'agenda ne montre plus que les notes et les actions ; les calculs restent
+  sur le rouleau.
 ```
 
 ---
