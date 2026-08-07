@@ -1,0 +1,244 @@
+/* Blocgenda — feuille de style du site.
+   Même charte que l'application : châssis sombre, papier chaud, ambre et mer. */
+
+:root {
+  --chassis: #14161a;
+  --chassis-soft: #1c1f26;
+  --chassis-line: #2a2f38;
+  --paper: #faf6ec;
+  --paper-shade: #f0eadc;
+  --text: #1b1d22;
+  --text-soft: #9d9c94;
+  --text-faint: #6f6e68;
+  --amber: #e0913a;
+  --amber-deep: #c2742a;
+  --sea: #2f9dab;
+  --moss: #7aab6b;
+  --rouge: #d4675d;
+  --violet: #8f7ccb;
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --max: 980px;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--chassis);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Halo ambré discret, comme le soleil de l'icône */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(60rem 34rem at 50% -12rem, rgba(224, 145, 58, .17), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+
+a { color: var(--amber); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- En-tête ---------- */
+
+header.site {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(20, 22, 26, .86);
+  backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid var(--chassis-line);
+}
+header.site .wrap {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 62px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--paper); }
+.brand:hover { text-decoration: none; }
+.brand img { width: 30px; height: 30px; border-radius: 8px; display: block; }
+nav.site { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+nav.site a { color: var(--text-soft); font-size: 14.5px; font-weight: 500; }
+nav.site a:hover, nav.site a[aria-current="page"] { color: var(--amber); text-decoration: none; }
+
+/* ---------- Héros ---------- */
+
+.hero { padding: 74px 0 40px; text-align: center; }
+.hero img.icon {
+  width: 116px; height: 116px; border-radius: 26px; display: block; margin: 0 auto 26px;
+  box-shadow: 0 22px 50px rgba(0, 0, 0, .55);
+}
+.hero h1 { font-size: clamp(2.4rem, 7vw, 3.6rem); line-height: 1.05; margin: 0 0 14px; letter-spacing: -.02em; }
+.hero .tagline { font-size: clamp(1.05rem, 2.6vw, 1.28rem); color: var(--text-soft); max-width: 34rem; margin: 0 auto; }
+.hero .badges { margin-top: 24px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px; border-radius: 999px;
+  font-size: 13px; font-weight: 600;
+  border: 1px solid var(--chassis-line); color: var(--text-soft);
+  background: var(--chassis-soft);
+}
+.pill.amber { color: var(--amber); border-color: rgba(224, 145, 58, .35); background: rgba(224, 145, 58, .12); }
+.pill.sea { color: var(--sea); border-color: rgba(47, 157, 171, .35); background: rgba(47, 157, 171, .12); }
+
+.cta { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.button {
+  display: inline-block; padding: 12px 22px; border-radius: 13px;
+  font-weight: 700; font-size: 15px; border: 1px solid transparent;
+}
+.button.primary { background: var(--amber); color: #16181c; }
+.button.primary:hover { background: #efa257; text-decoration: none; }
+.button.ghost { border-color: var(--chassis-line); color: var(--paper); background: var(--chassis-soft); }
+.button.ghost:hover { border-color: var(--amber); text-decoration: none; }
+
+/* ---------- Sections ---------- */
+
+section { padding: 52px 0; }
+section > .wrap > h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem); margin: 0 0 8px; letter-spacing: -.01em;
+}
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--text-faint); margin: 0 0 10px;
+}
+.lede { color: var(--text-soft); max-width: 46rem; margin: 0 0 26px; }
+
+hr.rule { border: 0; border-top: 1px dashed var(--chassis-line); margin: 0; }
+
+/* ---------- La bande de papier ---------- */
+
+.tape {
+  background: linear-gradient(180deg, var(--paper), var(--paper-shade));
+  color: var(--text);
+  border-radius: 6px;
+  padding: 26px 22px;
+  font-family: var(--mono);
+  font-size: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .45);
+  position: relative;
+  overflow: hidden;
+}
+.tape::before, .tape::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 10px;
+  background-size: 18px 10px; background-repeat: repeat-x;
+}
+.tape::before {
+  top: 0;
+  background-image: linear-gradient(135deg, var(--chassis) 25%, transparent 25%),
+                    linear-gradient(225deg, var(--chassis) 25%, transparent 25%);
+}
+.tape::after {
+  bottom: 0;
+  background-image: linear-gradient(45deg, var(--chassis) 25%, transparent 25%),
+                    linear-gradient(315deg, var(--chassis) 25%, transparent 25%);
+}
+.tape table { width: 100%; border-collapse: collapse; margin: 10px 0 0; }
+.tape td { padding: 7px 6px; border-bottom: 1px dotted rgba(27, 29, 34, .22); vertical-align: top; }
+.tape tr:last-child td { border-bottom: 0; }
+.tape td.in { white-space: nowrap; font-weight: 600; }
+.tape td.arrow { color: var(--text-faint); width: 1.6rem; text-align: center; }
+.tape td.out { color: #4a4942; }
+.tape .amount { color: var(--amber-deep); font-weight: 700; }
+.tape .head {
+  font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--text-faint); text-align: center; display: block;
+}
+
+/* ---------- Grille de fonctions ---------- */
+
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); }
+.card {
+  background: var(--chassis-soft); border: 1px solid var(--chassis-line);
+  border-radius: var(--radius); padding: 20px;
+}
+.card h3 { margin: 0 0 7px; font-size: 1.03rem; display: flex; align-items: center; gap: 8px; }
+.card p { margin: 0; color: var(--text-soft); font-size: 14.6px; line-height: 1.6; }
+.card .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.amber { background: var(--amber); }
+.dot.sea { background: var(--sea); }
+.dot.moss { background: var(--moss); }
+.dot.violet { background: var(--violet); }
+.dot.rouge { background: var(--rouge); }
+
+/* ---------- Captures ---------- */
+
+.shots {
+  display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  align-items: start;
+}
+.shot figure { margin: 0; }
+.shot img {
+  width: 100%; height: auto; display: block;
+  border-radius: 20px; border: 1px solid var(--chassis-line);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .5);
+}
+.shot figcaption {
+  margin-top: 10px; text-align: center; font-size: 13px; color: var(--text-soft);
+}
+
+/* ---------- Encadré ---------- */
+
+.callout {
+  border-left: 3px solid var(--amber); border-radius: 0 12px 12px 0;
+  background: rgba(224, 145, 58, .08);
+  padding: 16px 18px; color: var(--text-soft); font-size: 15px;
+}
+.callout.sea { border-left-color: var(--sea); background: rgba(47, 157, 171, .08); }
+.callout.rouge { border-left-color: var(--rouge); background: rgba(212, 103, 93, .09); }
+.callout strong { color: var(--paper); }
+
+/* ---------- Pages de texte ---------- */
+
+.doc { max-width: 46rem; }
+.doc h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); margin: 0 0 6px; }
+.doc .updated { color: var(--text-faint); font-size: 14px; margin: 0 0 34px; font-family: var(--mono); }
+.doc h2 {
+  font-size: 1.16rem; margin: 38px 0 10px; padding-top: 18px;
+  border-top: 1px solid var(--chassis-line);
+}
+.doc h3 { font-size: 1rem; margin: 22px 0 6px; color: var(--amber); }
+.doc p, .doc li { color: var(--text-soft); font-size: 16px; }
+.doc strong { color: var(--paper); }
+.doc ul, .doc ol { padding-left: 1.25rem; }
+.doc li { margin-bottom: 7px; }
+.doc table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15px; }
+.doc th, .doc td {
+  text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--chassis-line);
+  vertical-align: top; color: var(--text-soft);
+}
+.doc th { color: var(--paper); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
+.doc code {
+  font-family: var(--mono); font-size: .88em;
+  background: var(--chassis-soft); border: 1px solid var(--chassis-line);
+  padding: 1px 6px; border-radius: 6px; color: var(--paper);
+}
+
+/* ---------- Pied ---------- */
+
+footer.site {
+  border-top: 1px solid var(--chassis-line);
+  margin-top: 40px; padding: 34px 0 54px;
+  color: var(--text-faint); font-size: 14px;
+}
+footer.site .links { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+footer.site a { color: var(--text-soft); }
+footer.site a:hover { color: var(--amber); }
+
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .hero { padding: 48px 0 28px; }
+  section { padding: 38px 0; }
+}

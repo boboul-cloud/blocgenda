@@ -1,0 +1,59 @@
+name: Signaler une donnée inexacte
+description: Un saint, un dicton, une heure de marée, un lever de soleil qui ne colle pas
+labels: ["donnée"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Les éphémérides sont calculées ou embarquées dans l'application ; une erreur
+        se corrige donc directement. Merci de citer votre source de comparaison.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Quelle donnée
+      options:
+        - Saint du jour
+        - Dicton
+        - Jour férié
+        - « Ce jour-là » (événement historique)
+        - Lever / coucher du soleil
+        - Lune (phase, lever, coucher)
+        - Marée (heure, hauteur, marnage)
+        - Périodes de pêche (solunaire)
+        - Météo
+        - Autre
+    validations:
+      required: true
+
+  - type: input
+    id: date-lieu
+    attributes:
+      label: Date et lieu concernés
+      placeholder: 7 août 2026, Brest
+    validations:
+      required: true
+
+  - type: input
+    id: affiche
+    attributes:
+      label: Ce qu'affiche Blocgenda
+      placeholder: pleine mer à 11h25, 1,08 m
+    validations:
+      required: true
+
+  - type: input
+    id: attendu
+    attributes:
+      label: La valeur correcte
+      placeholder: pleine mer à 11h18
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Votre source
+      placeholder: annuaire des marées du SHOM, calendrier des postes, IMCCE…
+    validations:
+      required: true

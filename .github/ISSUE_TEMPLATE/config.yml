@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Assistance et questions fréquentes
+    url: https://boboul-cloud.github.io/blocgenda/assistance.html
+    about: Réponses aux questions courantes avant d'ouvrir un ticket.
+  - name: Faille de sécurité
+    url: https://github.com/boboul-cloud/blocgenda/blob/main/SECURITY.md
+    about: À signaler en privé par courriel, jamais dans un ticket public.
+  - name: Écrire directement
+    url: mailto:bob.oulhen@gmail.com
+    about: Pour tout ce qui ne rentre pas dans un ticket.

@@ -1,0 +1,32 @@
+name: Proposer une idée
+description: Une fonctionnalité, une amélioration
+labels: ["idée"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Blocgenda tient à rester simple : une bande, un jour, un agenda, un annuaire.
+        Toutes les idées ne seront pas retenues, mais toutes seront lues.
+
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Le besoin
+      description: Racontez la situation réelle, pas la solution technique.
+      placeholder: Quand je prépare une sortie en mer, je dois…
+    validations:
+      required: true
+
+  - type: textarea
+    id: idee
+    attributes:
+      label: Ce que vous imaginez
+    validations:
+      required: false
+
+  - type: textarea
+    id: contournement
+    attributes:
+      label: Comment vous faites aujourd'hui
+    validations:
+      required: false

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assistance — Blocgenda</title>
+<meta name="description" content="Aide, questions fréquentes et contact pour l’application Blocgenda.">
+<meta name="theme-color" content="#14161a">
+<link rel="icon" href="icone.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="icone.png" alt="">Blocgenda</a>
+    <nav class="site">
+      <a href="index.html">Accueil</a>
+      <a href="confidentialite.html">Confidentialité</a>
+      <a href="conditions.html">Conditions</a>
+      <a href="assistance.html" aria-current="page">Assistance</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap doc">
+
+<h1>Assistance</h1>
+<p class="updated">Blocgenda 1.0</p>
+
+<div class="callout">
+  Une question, un bug, une idée ? Écrivez à
+  <a href="mailto:bob.oulhen@gmail.com?subject=Blocgenda%201.0%20%E2%80%94%20">bob.oulhen@gmail.com</a>,
+  ou ouvrez un ticket sur
+  <a href="https://github.com/boboul-cloud/blocgenda/issues">GitHub</a>.
+  Réponse sous quelques jours ; c’est une application faite par une seule personne.
+</div>
+
+<h2>Bien démarrer</h2>
+
+<h3>La barre de saisie</h3>
+<p>
+  Tout passe par la barre du bas, sur l’écran <em>Rouleau</em>. Écrivez comme vous
+  parleriez ; l’étiquette au-dessus de la barre vous dit ce que Blocgenda a compris avant
+  que vous validiez. Quelques exemples :
+</p>
+<ul>
+  <li><code>12,50 × 3</code> ou <code>200 + 10%</code> → un calcul ;</li>
+  <li><code>- rappeler le garage</code> → une action à cocher (commencez par un tiret) ;</li>
+  <li><code>demain 14h30 dentiste</code> → un rendez-vous avec notification ;</li>
+  <li><code>réunion lundi 9h pendant 2h</code> → un rendez-vous de deux heures ;</li>
+  <li><code>essence 62,30 #bateau</code> → une note chiffrée, étiquetée.</li>
+</ul>
+
+<h3>Les gestes utiles</h3>
+<ul>
+  <li><strong>Toucher</strong> une action la coche ; toucher une autre ligne l’ouvre en modification.</li>
+  <li><strong>Appui long</strong> sur une ligne : épingler, modifier, copier, supprimer.</li>
+  <li><strong>Les ciseaux</strong>, en haut à droite : déchirent la bande, archivent les lignes
+      terminées et produisent une image du ticket à partager. Les actions non faites et les
+      lignes épinglées restent.</li>
+  <li><strong>La touche <code>TOTAL</code></strong> du clavier imprime un sous-total et repart de zéro.</li>
+</ul>
+
+<h2>Questions fréquentes</h2>
+
+<h3>La marée n’apparaît pas, ou indique un autre port</h3>
+<p>
+  Les prévisions maritimes ne couvrent que la mer. Si vous êtes à l’intérieur des terres,
+  Blocgenda bascule automatiquement sur le port de référence le plus proche et l’affiche
+  sous la courbe. Pour en choisir un autre : écran <em>Le jour</em> → le bouton du lieu, en
+  haut à droite → <em>Ports de référence</em>.
+</p>
+
+<h3>Pourquoi les hauteurs sont-elles négatives ?</h3>
+<p>
+  Elles sont comptées <strong>par rapport au niveau moyen de la mer</strong>, et non par
+  rapport au zéro des cartes marines : à basse mer, la valeur est donc négative. Le chiffre
+  utile au quotidien est le <em>marnage</em>, affiché sous la courbe.
+  <strong>Pour naviguer, utilisez l’annuaire officiel du SHOM.</strong>
+</p>
+
+<h3>Le widget ne se met pas à jour</h3>
+<p>
+  Ouvrez l’application une fois : elle réécrit la photographie du jour que le widget lit.
+  iOS décide ensuite lui-même du rythme de rafraîchissement, en général tous les quarts
+  d’heure. Vérifiez aussi que l’actualisation en arrière-plan est autorisée dans
+  <em>Réglages iOS › Général › Actualisation en arrière-plan</em>.
+</p>
+
+<h3>Je ne reçois pas les notifications</h3>
+<p>
+  Vérifiez <em>Réglages iOS › Notifications › Blocgenda</em>, puis, dans l’application,
+  l’écran des réglages (icône de curseurs, à droite de la barre d’onglets) : le point du
+  matin, le bilan du soir et les alertes marée et heure dorée s’y activent séparément.
+  iOS limite à 64 le nombre de notifications en attente ; Blocgenda programme les
+  rendez-vous des trois semaines à venir et reconstruit la file à chaque modification.
+</p>
+
+<h3>Puis-je refuser la localisation ?</h3>
+<p>
+  Oui. Ouvrez l’écran <em>Le jour</em>, touchez le bouton du lieu et désactivez
+  <em>Suivre ma position</em> : choisissez ensuite un lieu dans la liste. Tout continue de
+  fonctionner.
+</p>
+
+<h3>Où sont mes données ? Sont-elles sauvegardées ?</h3>
+<p>
+  Sur votre appareil, et nulle part ailleurs — voir la
+  <a href="confidentialite.html">politique de confidentialité</a>.
+  <strong>Conséquence importante :</strong> si vous supprimez l’application, tout est perdu et
+  personne ne peut le restaurer. Activez la sauvegarde iCloud de votre iPhone, et exportez
+  les bandes qui comptent avec les ciseaux.
+</p>
+
+<h3>Sur quels appareils ?</h3>
+<p>
+  iPhone et iPad sous iOS / iPadOS 18 ou plus récent. L’interface est en français.
+</p>
+
+<h2>Signaler un problème</h2>
+<p>
+  Pour qu’un bug soit réparable, indiquez si possible :
+</p>
+<ul>
+  <li>le modèle d’appareil et la version d’iOS ;</li>
+  <li>la version de Blocgenda (réglages, section <em>À propos</em>) ;</li>
+  <li>ce que vous avez fait, ce que vous attendiez, ce qui s’est produit ;</li>
+  <li>une capture d’écran si l’affichage est en cause ;</li>
+  <li>pour un calcul ou une date mal comprise : <strong>le texte exact que vous avez tapé</strong>.</li>
+</ul>
+<p>
+  <a class="button ghost" href="https://github.com/boboul-cloud/blocgenda/issues/new/choose">Ouvrir un ticket</a>
+  <a class="button ghost" href="mailto:bob.oulhen@gmail.com?subject=Blocgenda%20%E2%80%94%20probl%C3%A8me">Écrire un courriel</a>
+</p>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="index.html">Accueil</a>
+      <a href="confidentialite.html">Confidentialité</a>
+      <a href="conditions.html">Conditions d’utilisation</a>
+      <a href="assistance.html">Assistance</a>
+      <a href="mentions-legales.html">Mentions légales</a>
+    </div>
+    <p>© 2026 Blocgenda. Tous droits réservés.</p>
+  </div>
+</footer>
+
+</body>
+</html>

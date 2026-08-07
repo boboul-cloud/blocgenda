@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Politique de confidentialité — Blocgenda</title>
+<meta name="description" content="Politique de confidentialité de l’application Blocgenda : aucune donnée personnelle collectée, tout reste sur l’appareil.">
+<meta name="theme-color" content="#14161a">
+<link rel="icon" href="icone.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="icone.png" alt="">Blocgenda</a>
+    <nav class="site">
+      <a href="index.html">Accueil</a>
+      <a href="confidentialite.html" aria-current="page">Confidentialité</a>
+      <a href="conditions.html">Conditions</a>
+      <a href="assistance.html">Assistance</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap doc">
+
+<h1>Politique de confidentialité</h1>
+<p class="updated">Application Blocgenda · version 1.0 · dernière mise à jour : 7 août 2026</p>
+
+<div class="callout">
+  <strong>En une phrase :</strong> Blocgenda ne collecte rien. Vos notes, votre agenda,
+  votre annuaire et vos réglages restent sur votre appareil ; l’éditeur n’y a pas accès
+  et ne dispose d’aucun serveur.
+</div>
+
+<h2>1. Qui est responsable de ce traitement</h2>
+<p>
+  L’éditeur de l’application Blocgenda (ci-après « l’application ») est
+  <strong>Bob Oulhen</strong>, éditeur individuel.
+  Contact : <a href="mailto:bob.oulhen@gmail.com">bob.oulhen@gmail.com</a>.
+</p>
+<p>
+  La présente politique décrit le traitement des données dans l’application iOS et sur
+  le site <code>boboul-cloud.github.io/blocgenda</code>.
+</p>
+
+<h2>2. Les données que vous créez</h2>
+<p>
+  Tout ce que vous écrivez dans l’application — lignes du rouleau, calculs, notes,
+  actions, rendez-vous, fiches d’annuaire, réglages — est enregistré
+  <strong>uniquement sur votre appareil</strong>, dans le conteneur de l’application et
+  dans un dossier partagé (« groupe d’app ») qui permet au widget de les afficher.
+</p>
+<ul>
+  <li>Ces données ne sont <strong>jamais transmises</strong> à l’éditeur ni à un tiers.</li>
+  <li>Il n’y a <strong>ni compte, ni identifiant, ni synchronisation</strong> par nos soins.</li>
+  <li>Si vous avez activé la sauvegarde iCloud d’Apple pour vos applications, une copie
+      chiffrée peut être incluse dans votre sauvegarde personnelle. Ce traitement relève
+      d’Apple et de vos réglages, pas de l’application.</li>
+  <li>Désinstaller l’application <strong>efface définitivement</strong> ces données.</li>
+</ul>
+
+<h2>3. La position</h2>
+<p>
+  Avec votre autorisation, l’application lit votre position pour calculer le lever et le
+  coucher du soleil, la lune, la marée et la météo du lieu où vous vous trouvez.
+</p>
+<ul>
+  <li>La précision demandée est volontairement grossière (de l’ordre du kilomètre) :
+      la commune suffit à une éphéméride.</li>
+  <li>La position n’est <strong>pas transmise à l’éditeur</strong> et n’est pas conservée
+      au-delà du dernier lieu connu, gardé sur l’appareil pour ne pas la redemander.</li>
+  <li>Vous pouvez refuser la localisation et <strong>choisir un lieu à la main</strong> :
+      l’application reste pleinement utilisable.</li>
+  <li>Le réglage se change à tout moment dans <em>Réglages iOS › Blocgenda › Position</em>.</li>
+</ul>
+
+<h2>4. Les services tiers appelés</h2>
+<p>
+  L’application n’utilise aucun kit d’analyse, de publicité ou de suivi. Elle appelle
+  seulement les services suivants, et seulement quand c’est nécessaire :
+</p>
+
+<table>
+  <tr>
+    <th>Service</th><th>Ce qui est envoyé</th><th>Pourquoi</th>
+  </tr>
+  <tr>
+    <td><strong>Open-Meteo</strong><br><code>marine-api.open-meteo.com</code><br><code>api.open-meteo.com</code></td>
+    <td>Une latitude et une longitude arrondies au dix-millième de degré, et rien d’autre :
+        pas d’identifiant, pas de nom, pas de contenu, pas de cookie.</td>
+    <td>Obtenir la courbe de marée et la météo du lieu.</td>
+  </tr>
+  <tr>
+    <td><strong>Apple</strong><br>(service de géocodage inverse d’iOS)</td>
+    <td>Vos coordonnées, transmises par le système d’exploitation.</td>
+    <td>Traduire la position en nom de commune, pour l’afficher.
+        Ce traitement est celui d’Apple ; voir la politique de confidentialité d’Apple.</td>
+  </tr>
+</table>
+
+<p>
+  Open-Meteo est un service météorologique libre ; ses conditions et sa politique sont
+  publiées sur <a href="https://open-meteo.com/">open-meteo.com</a>. L’éditeur de Blocgenda
+  n’a aucun contrôle sur les traitements opérés par ces tiers, notamment la conservation
+  des journaux de connexion (dont votre adresse IP, comme pour toute visite d’un site).
+</p>
+
+<h2>5. Les notifications</h2>
+<p>
+  Toutes les notifications de Blocgenda sont <strong>locales</strong> : elles sont
+  programmées par l’application sur votre appareil, à partir de vos rendez-vous et de vos
+  réglages. Aucun serveur de notification distant n’est utilisé, et leur contenu ne quitte
+  pas le téléphone. Vous pouvez les refuser ou les désactiver à tout moment.
+</p>
+
+<h2>6. Les photos</h2>
+<p>
+  Quand vous déchirez la bande, l’application produit une image du ticket et vous la
+  propose au partage. L’enregistrement dans votre photothèque n’a lieu que si
+  <strong>vous le demandez explicitement</strong> depuis la feuille de partage d’iOS.
+  L’application ne lit jamais vos photos.
+</p>
+
+<h2>7. Ce site web</h2>
+<p>
+  Ce site est hébergé par GitHub Pages. Il ne dépose <strong>aucun cookie</strong>, ne
+  charge aucune police, aucun script et aucune image d’un domaine tiers, et n’utilise
+  aucun outil de mesure d’audience. L’hébergeur enregistre néanmoins des journaux
+  techniques (adresse IP, agent utilisateur) selon sa propre politique.
+</p>
+
+<h2>8. Vos droits</h2>
+<p>
+  Le règlement général sur la protection des données (RGPD) vous donne des droits d’accès,
+  de rectification, d’effacement, de limitation, d’opposition et de portabilité.
+</p>
+<p>
+  <strong>Comme l’éditeur ne détient aucune de vos données</strong>, ces droits s’exercent
+  directement sur votre appareil : vous consultez et modifiez tout dans l’application,
+  et une désinstallation efface l’ensemble. Si vous avez une question ou une réclamation,
+  écrivez à <a href="mailto:bob.oulhen@gmail.com">bob.oulhen@gmail.com</a> ; vous pouvez
+  également saisir la CNIL (<a href="https://www.cnil.fr">cnil.fr</a>).
+</p>
+
+<h2>9. Durée de conservation</h2>
+<p>
+  Vos données restent sur l’appareil aussi longtemps que vous gardez l’application.
+  L’éditeur ne conserve rien, puisqu’il ne reçoit rien.
+</p>
+
+<h2>10. Les enfants</h2>
+<p>
+  Blocgenda n’est pas destinée aux enfants de moins de treize ans et ne leur demande
+  aucune information. Aucun contenu n’est adressé à ce public.
+</p>
+
+<h2>11. Modifications</h2>
+<p>
+  Cette politique peut évoluer avec l’application. La date de dernière mise à jour figure
+  en haut de cette page, et l’historique complet des modifications est consultable dans le
+  <a href="https://github.com/boboul-cloud/blocgenda">dépôt public du code</a>.
+  Une modification substantielle sera signalée dans les notes de version.
+</p>
+
+<h2>12. Contact</h2>
+<p>
+  Pour toute question sur cette politique :
+  <a href="mailto:bob.oulhen@gmail.com">bob.oulhen@gmail.com</a>.
+</p>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="index.html">Accueil</a>
+      <a href="confidentialite.html">Confidentialité</a>
+      <a href="conditions.html">Conditions d’utilisation</a>
+      <a href="assistance.html">Assistance</a>
+      <a href="mentions-legales.html">Mentions légales</a>
+    </div>
+    <p>© 2026 Blocgenda. Tous droits réservés.</p>
+  </div>
+</footer>
+
+</body>
+</html>

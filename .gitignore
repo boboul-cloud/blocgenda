@@ -1,0 +1,5 @@
+build/
+DerivedData/
+Blocgenda.xcodeproj/
+*.xcuserdatad
+.DS_Store

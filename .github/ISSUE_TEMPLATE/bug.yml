@@ -1,0 +1,86 @@
+name: Signaler un bug
+description: Quelque chose ne fonctionne pas comme prévu
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps. Plus c'est précis, plus vite c'est réparé.
+        **Pour une faille de sécurité, n'utilisez pas ce formulaire** : écrivez à
+        bob.oulhen@gmail.com (voir SECURITY.md).
+
+  - type: textarea
+    id: quoi
+    attributes:
+      label: Ce qui se passe
+      description: Décrivez le problème en quelques phrases.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduire
+    attributes:
+      label: Comment le reproduire
+      placeholder: |
+        1. Ouvrir l'écran Rouleau
+        2. Taper « … »
+        3. Valider
+        4. Observer …
+    validations:
+      required: true
+
+  - type: input
+    id: saisie
+    attributes:
+      label: Texte exact tapé (si un calcul ou une date est mal compris)
+      placeholder: réunion mardi 9h pendant 1h30
+    validations:
+      required: false
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce que vous attendiez
+    validations:
+      required: true
+
+  - type: input
+    id: appareil
+    attributes:
+      label: Appareil et version d'iOS
+      placeholder: iPhone 15 Pro, iOS 18.4
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version de Blocgenda
+      description: Réglages de l'app, section « À propos ».
+      placeholder: 1.0 (1)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ecran
+    attributes:
+      label: Écran concerné
+      options:
+        - Rouleau
+        - Le jour (soleil, marée, lune, éphéméride)
+        - Agenda
+        - Annuaire
+        - Widget
+        - Notifications
+        - Réglages
+        - Autre / je ne sais pas
+    validations:
+      required: true
+
+  - type: textarea
+    id: captures
+    attributes:
+      label: Captures d'écran
+      description: Déposez-les ici si l'affichage est en cause.
+    validations:
+      required: false

@@ -1,0 +1,80 @@
+name: Intégration continue
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  moteur:
+    name: Moteur (calculatrice, dates, éphémérides)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lancer le banc de tests
+        run: ./Tools/run-engine-tests.sh
+
+  application:
+    name: Compilation iOS
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Afficher la version de Xcode
+        run: xcodebuild -version
+
+      - name: Installer XcodeGen
+        run: brew install xcodegen
+
+      - name: Générer le projet
+        run: xcodegen generate
+
+      - name: Compiler l'app et le widget
+        run: |
+          xcodebuild \
+            -project Blocgenda.xcodeproj \
+            -scheme Blocgenda \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build > build.log 2>&1 || true
+          # La compilation doit réussir ET ne produire aucun avertissement.
+          if ! grep -q '\*\* BUILD SUCCEEDED \*\*' build.log; then
+            echo "::error::La compilation a échoué."
+            grep -E 'error:' build.log | head -40
+            exit 1
+          fi
+          if grep -E 'warning:' build.log | grep -v 'AppIntents\|Metadata\|SSU' | grep -q .; then
+            echo "::error::La compilation produit des avertissements :"
+            grep -E 'warning:' build.log | grep -v 'AppIntents\|Metadata\|SSU' | sort -u | head -40
+            exit 1
+          fi
+
+  icone:
+    name: Icône 1024 sans canal alpha
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Pillow
+        run: python3 -m pip install --break-system-packages Pillow
+
+      - name: Régénérer et vérifier l'icône
+        run: |
+          python3 Tools/make_icon.py
+          ICON=Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+          sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON"
+          test "$(sips -g pixelWidth  "$ICON" | tail -1 | tr -dc 0-9)" = "1024"
+          test "$(sips -g pixelHeight "$ICON" | tail -1 | tr -dc 0-9)" = "1024"
+          if sips -g hasAlpha "$ICON" | grep -q 'yes'; then
+            echo "::error::L'icône contient un canal alpha, l'App Store la refuserait."
+            exit 1
+          fi

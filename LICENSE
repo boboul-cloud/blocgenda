@@ -1,0 +1,70 @@
+Blocgenda — Licence propriétaire
+Copyright © 2026 Bob Oulhen. Tous droits réservés.
+All rights reserved.
+
+---
+
+FRANÇAIS
+
+Le code source de Blocgenda est publié dans un but de transparence : chacun peut
+le lire, vérifier ce que l'application fait de ses données, et le compiler pour
+son usage strictement personnel.
+
+Cette publication n'est PAS une licence open source. Sauf autorisation écrite
+préalable de l'auteur, il est interdit de :
+
+  - redistribuer ce code, en tout ou partie, modifié ou non ;
+  - le réutiliser dans un autre logiciel, gratuit ou payant ;
+  - publier une application dérivée, notamment sur une boutique d'applications ;
+  - exploiter commercialement le code, le nom « Blocgenda », son icône ou son
+    identité visuelle.
+
+Est expressément autorisé, sans démarche :
+
+  - lire, étudier et commenter le code ;
+  - le compiler et l'exécuter sur vos propres appareils, pour votre usage
+    personnel et non commercial ;
+  - en citer de courts extraits à des fins pédagogiques ou critiques, avec
+    mention de la source ;
+  - proposer des corrections par « pull request » (voir CONTRIBUTING.md).
+
+LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE, EXPRESSE OU
+IMPLICITE, NOTAMMENT DE QUALITÉ MARCHANDE, D'ADÉQUATION À UN USAGE PARTICULIER
+OU D'ABSENCE DE CONTREFAÇON. EN AUCUN CAS L'AUTEUR NE POURRA ÊTRE TENU POUR
+RESPONSABLE D'UNE RÉCLAMATION, D'UN DOMMAGE OU DE TOUTE AUTRE RESPONSABILITÉ,
+CONTRACTUELLE OU DÉLICTUELLE, LIÉE AU LOGICIEL OU À SON UTILISATION.
+
+Avertissement particulier : les données de marée, d'éphéméride et de météo
+affichées sont indicatives et ne doivent pas servir à la navigation ni à aucune
+décision de sécurité. Voir docs/conditions.html.
+
+Pour toute demande d'autorisation : bob.oulhen@gmail.com
+
+---
+
+ENGLISH (courtesy translation; the French text prevails)
+
+The source code of Blocgenda is published for transparency: anyone may read it,
+verify what the app does with user data, and build it for strictly personal use.
+
+This is NOT an open source licence. Without the author's prior written
+permission, you may not redistribute this code (in whole or in part, modified or
+not), reuse it in other software, publish derivative applications — in
+particular on any app store — or make commercial use of the code, the name
+"Blocgenda", its icon or its visual identity.
+
+You may, without asking: read and study the code, build and run it on your own
+devices for personal non-commercial use, quote short excerpts for educational or
+critical purposes with attribution, and submit fixes as pull requests.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Third-party notice: tide and weather data come from Open-Meteo, licensed under
+CC BY 4.0. SF Symbols are Apple's, used under the Apple developer licence.
+
+Permission requests: bob.oulhen@gmail.com
