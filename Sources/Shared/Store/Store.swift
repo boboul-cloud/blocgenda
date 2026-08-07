@@ -103,6 +103,20 @@ final class Store {
         scheduleSave()
     }
 
+    /// Les étiquettes déjà employées, les plus fréquentes d'abord.
+    /// Elles sont proposées sous la barre de saisie : c'est là qu'on découvre
+    /// qu'elles existent, et là qu'on les réutilise sans faute de frappe.
+    func frequentTags(limit: Int = 10) -> [String] {
+        var counts: [String: Int] = [:]
+        for entry in tape where entry.isOnRoll {
+            for tag in entry.tags { counts[tag, default: 0] += 1 }
+        }
+        return counts
+            .sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+            .prefix(limit)
+            .map(\.key)
+    }
+
     /// Total courant de la bande depuis le dernier sous-total imprimé.
     var runningTotal: Double {
         let entries = rollEntries

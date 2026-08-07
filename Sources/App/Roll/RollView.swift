@@ -20,7 +20,8 @@ struct RollView: View {
             SmartBar(text: $draft,
                      showKeypad: $showKeypad,
                      focused: $inputFocused,
-                     onSubmit: print)
+                     onSubmit: print,
+                     tagSuggestions: store.frequentTags())
             if showKeypad {
                 Keypad(text: $draft,
                        onEqual: print,
@@ -111,7 +112,9 @@ struct RollView: View {
                         EmptyRoll(searching: !search.isEmpty)
                     }
                     ForEach(visibleDays) { day in
-                        DayStrip(day: day, currency: store.settings.currencySymbol)
+                        DayStrip(day: day,
+                                 currency: store.settings.currencySymbol,
+                                 onTagTap: filter(by:))
                             .id(day.day)
                     }
                     Color.clear.frame(height: 26).id("bottom")
@@ -154,6 +157,15 @@ struct RollView: View {
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         }
         draft = ""
+    }
+
+    /// Toucher une étiquette ouvre la loupe et n'affiche plus qu'elle.
+    private func filter(by tag: String) {
+        withAnimation(.snappy) {
+            search = tag
+            showSearch = true
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func tear() {
@@ -241,6 +253,7 @@ struct RollHead: View {
 struct DayStrip: View {
     let day: TapeDay
     let currency: String
+    var onTagTap: ((String) -> Void)? = nil
     @Environment(Store.self) private var store
 
     var body: some View {
@@ -257,7 +270,7 @@ struct DayStrip: View {
             .padding(.vertical, 10)
 
             ForEach(day.entries) { entry in
-                TapeRow(entry: entry, currency: currency)
+                TapeRow(entry: entry, currency: currency, onTagTap: onTagTap)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .opacity))

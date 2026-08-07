@@ -119,7 +119,8 @@ struct AgendaView: View {
                      onSubmit: print,
                      placeholder: barPlaceholder,
                      showsKeypadToggle: false,
-                     reference: referenceDate)
+                     reference: referenceDate,
+                     tagSuggestions: store.frequentTags())
 
             Color.clear.frame(height: 62) // place pour la barre d'onglets
         }

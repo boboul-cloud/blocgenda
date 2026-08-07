@@ -13,6 +13,8 @@ struct SmartBar: View {
     var showsKeypadToggle: Bool = true
     /// Jour de référence pour l'aperçu — celui que l'agenda a sélectionné.
     var reference: Date = Date()
+    /// Étiquettes déjà employées, proposées dès qu'on écrit.
+    var tagSuggestions: [String] = []
 
     private var preview: SmartInput.Parsed? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -22,6 +24,12 @@ struct SmartBar: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if focused {
+                TagSuggestions(tags: tagSuggestions, onPick: insertTag)
+                    .padding(.bottom, 6)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
             if let preview {
                 IntentPreview(parsed: preview)
                     .padding(.horizontal, 18)
@@ -91,6 +99,66 @@ struct SmartBar: View {
         }
         .background(Ink.chassis)
         .animation(.snappy(duration: 0.2), value: text.isEmpty)
+        .animation(.snappy(duration: 0.2), value: focused)
+    }
+
+    /// Ajoute une étiquette en fin de ligne. Un nom vide insère juste le `#`,
+    /// pour qui veut en inventer une nouvelle.
+    private func insertTag(_ tag: String) {
+        if !text.isEmpty && !text.hasSuffix(" ") { text += " " }
+        text += tag.isEmpty ? "#" : "#\(tag) "
+        focused = true
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+}
+
+/// La rangée d'étiquettes sous la barre. Elle sert autant à réutiliser les
+/// étiquettes existantes qu'à faire découvrir qu'elles existent : sans elle,
+/// il fallait deviner qu'on pouvait taper « #bateau ».
+struct TagSuggestions: View {
+    let tags: [String]
+    var onPick: (String) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                Button { onPick("") } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "number")
+                            .font(.system(size: 10, weight: .bold))
+                        if tags.isEmpty {
+                            Text("étiqueter").font(Type.ui(11, weight: .semibold))
+                        }
+                    }
+                    .foregroundStyle(.black.opacity(0.8))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(Ink.amber))
+                }
+                .accessibilityIdentifier("barre.etiquette")
+                .accessibilityLabel("Ajouter une étiquette")
+
+                if tags.isEmpty {
+                    Text("classez vos lignes : #bateau, #maison…")
+                        .font(Type.ui(11))
+                        .foregroundStyle(Ink.textFaint)
+                } else {
+                    ForEach(tags, id: \.self) { tag in
+                        Button { onPick(tag) } label: {
+                            Text("#\(tag)")
+                                .font(Type.ui(11.5, weight: .medium))
+                                .foregroundStyle(Ink.amberDeep)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Ink.amber.opacity(0.15)))
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+        }
+        .buttonStyle(.plain)
+        .frame(height: 28)
     }
 }
 

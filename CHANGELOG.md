@@ -3,6 +3,21 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
+## [1.3] — 2026-08-07
+
+### Ajouté
+
+- **Les étiquettes deviennent trouvables.** Elles existaient depuis la première
+  version — un mot précédé d'un dièse dans la ligne — mais rien ne le laissait
+  deviner. Dès que la barre de saisie a le focus, une rangée s'affiche au-dessus :
+  un bouton `#` pour en créer une, et les étiquettes déjà employées, les plus
+  fréquentes d'abord, à placer d'un geste.
+- **Toucher une étiquette sur le rouleau** ouvre la loupe et n'affiche plus que
+  les lignes qui la portent.
+- **Champ « Étiquettes » dans l'éditeur d'une ligne**, pour classer après coup
+  sans avoir à retaper la ligne. Il accepte les espaces comme les virgules, avec
+  ou sans dièse, et propose les étiquettes existantes.
+
 ## [1.2] — 2026-08-07
 
 ### Modifié

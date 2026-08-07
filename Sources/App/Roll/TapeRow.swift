@@ -5,6 +5,8 @@ import SwiftUI
 struct TapeRow: View {
     let entry: TapeEntry
     let currency: String
+    /// Toucher une étiquette filtre la bande dessus.
+    var onTagTap: ((String) -> Void)? = nil
     @Environment(Store.self) private var store
     @State private var editing = false
 
@@ -144,6 +146,9 @@ struct TapeRow: View {
                     Text("#\(tag)")
                         .font(Type.tape(9.5, weight: .medium))
                         .foregroundStyle(Ink.amberDeep)
+                        .padding(.vertical, 2)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onTagTap?(tag) }
                 }
             }
         }
@@ -173,10 +178,12 @@ struct EntryEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: TapeEntry
     @State private var amountText: String
+    @State private var tagsText: String
 
     init(entry: TapeEntry) {
         _draft = State(initialValue: entry)
         _amountText = State(initialValue: entry.value.map { NumberStyleFR.format($0) } ?? "")
+        _tagsText = State(initialValue: entry.tags.joined(separator: " "))
     }
 
     var body: some View {
@@ -199,6 +206,34 @@ struct EntryEditor: View {
                     .pickerStyle(.segmented)
                 }
                 Section {
+                    TextField("bateau maison…", text: $tagsText)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                    if !store.frequentTags().isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(store.frequentTags(), id: \.self) { tag in
+                                    Button {
+                                        appendTag(tag)
+                                    } label: {
+                                        Text("#\(tag)")
+                                            .font(Type.ui(11.5, weight: .medium))
+                                            .foregroundStyle(Ink.amberDeep)
+                                            .padding(.horizontal, 9).padding(.vertical, 5)
+                                            .background(Capsule().fill(Ink.amber.opacity(0.15)))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Étiquettes")
+                } footer: {
+                    Text("Séparées par des espaces, sans le dièse. Elles classent la ligne et permettent de la retrouver avec la loupe du rouleau.")
+                }
+
+                Section {
                     DatePicker("Horodatage", selection: $draft.date)
                     Toggle("Épingler sur le rouleau", isOn: $draft.pinned)
                 }
@@ -212,6 +247,7 @@ struct EntryEditor: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Enregistrer") {
                         draft.value = Calculator.evaluateLoose(amountText)
+                        draft.tags = Self.parseTags(tagsText)
                         store.update(draft)
                         dismiss()
                     }
@@ -219,5 +255,22 @@ struct EntryEditor: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func appendTag(_ tag: String) {
+        var tags = Self.parseTags(tagsText)
+        guard !tags.contains(tag) else { return }
+        tags.append(tag)
+        tagsText = tags.joined(separator: " ")
+    }
+
+    /// Accepte « bateau, #maison  port » et rend ["bateau", "maison", "port"].
+    static func parseTags(_ raw: String) -> [String] {
+        raw.split(whereSeparator: { $0 == " " || $0 == "," || $0 == ";" })
+            .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "#")) }
+            .filter { !$0.isEmpty }
+            .reduce(into: [String]()) { result, tag in
+                if !result.contains(tag) { result.append(tag) }
+            }
     }
 }

@@ -61,6 +61,12 @@ le **clavier de calculatrice** (`C`, parenthèses, `%`, `TVA`, `TOTAL`).
 - Recherche plein texte, y compris sur les `#étiquettes`.
 - Appui long sur une ligne : épingler, modifier, copier, supprimer.
 
+**Les étiquettes.** Un mot précédé d'un dièse, écrit n'importe où dans la ligne
+(`essence 62,30 #bateau`). Dès qu'on touche la barre, une rangée les propose :
+le bouton `#` en crée une, les pastilles rappellent celles déjà employées.
+Toucher une étiquette sur la bande n'affiche plus qu'elle ; l'éditeur d'une
+ligne permet d'en ajouter après coup.
+
 ### 2. Le jour
 
 - **Course du soleil** : un arc où le disque avance en temps réel ; lever,

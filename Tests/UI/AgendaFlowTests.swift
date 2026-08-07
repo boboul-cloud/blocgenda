@@ -155,6 +155,35 @@ final class AgendaFlowTests: XCTestCase {
                       "Son résultat devrait figurer sur le rouleau.")
     }
 
+    /// Les étiquettes doivent se découvrir sans mode d'emploi : dès que la
+    /// barre a le focus, une rangée les propose.
+    func testEtiqueterUneLigneDepuisLaRangee() throws {
+        app.buttons["onglet.roll"].tap()
+
+        let barre = app.textViews["barre.saisie"].exists
+            ? app.textViews["barre.saisie"]
+            : app.textFields["barre.saisie"]
+        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        barre.tap()
+
+        let bouton = app.buttons["barre.etiquette"]
+        XCTAssertTrue(bouton.waitForExistence(timeout: 3),
+                      "La rangée d'étiquettes devrait apparaître dès qu'on écrit.")
+
+        barre.typeText(uniqueTitle("Essence"))
+        bouton.tap()                 // insère le dièse
+        barre.typeText("bateau")
+        app.buttons["barre.valider"].tap()
+
+        XCTAssertTrue(app.staticTexts["#bateau"].waitForExistence(timeout: 5),
+                      "L'étiquette saisie devrait s'imprimer sous la ligne.")
+
+        // Une fois employée, elle est proposée d'un seul geste la fois d'après.
+        barre.tap()
+        XCTAssertTrue(app.buttons["#bateau"].waitForExistence(timeout: 3),
+                      "L'étiquette déjà employée devrait être proposée dans la rangée.")
+    }
+
     // MARK: - Le même parcours depuis le rouleau, pour comparaison
 
     func testSaisirUneLigneDepuisLeRouleau() throws {
