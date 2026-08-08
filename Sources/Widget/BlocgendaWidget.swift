@@ -82,7 +82,7 @@ struct TideWidget: Widget {
             TideWidgetView(entry: entry)
                 .widgetURL(URL(string: "blocgenda://jour"))
                 .containerBackground(for: .widget) {
-                    LinearGradient(colors: [Ink.seaDeep.opacity(0.55), Ink.chassis],
+                    LinearGradient(colors: [Ink.sea.opacity(0.18), Ink.chassis],
                                    startPoint: .top, endPoint: .bottom)
                 }
         }

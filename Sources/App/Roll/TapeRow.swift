@@ -80,7 +80,7 @@ struct TapeRow: View {
         case .task:
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: entry.done ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(Type.icon(13, weight: .medium))
                     .foregroundStyle(entry.done ? Ink.moss : Ink.textSoft)
                     .padding(.top, 1)
                 VStack(alignment: .leading, spacing: 2) {
@@ -111,7 +111,7 @@ struct TapeRow: View {
         case .event:
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "calendar.badge.clock")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(Type.icon(12, weight: .semibold))
                     .foregroundStyle(Ink.sea)
                     .padding(.top, 1)
                 VStack(alignment: .leading, spacing: 2) {
@@ -254,7 +254,7 @@ struct EntryEditor: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 
     private func appendTag(_ tag: String) {

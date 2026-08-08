@@ -28,6 +28,18 @@ final class Store {
             settings.hasSeededSample = true
             persistNow()
         }
+        importBirthdaysIfNeeded()
+    }
+
+    /// Les fiches déjà remplies avant que l'annuaire ne tienne l'agenda à jour
+    /// n'ont pas de rendez-vous d'anniversaire : on les reporte une fois pour
+    /// toutes. Une seule fois, sinon un anniversaire supprimé depuis l'agenda
+    /// reviendrait à chaque lancement.
+    private func importBirthdaysIfNeeded() {
+        guard settings.hasImportedBirthdays != true else { return }
+        for contact in contacts { syncBirthdayEvent(for: contact) }
+        settings.hasImportedBirthdays = true
+        persistNow()
     }
 
     // MARK: - Sauvegarde
@@ -208,12 +220,73 @@ final class Store {
         } else {
             contacts.append(contact)
         }
+        let agendaChanged = syncBirthdayEvent(for: contact)
         scheduleSave()
+        if agendaChanged {
+            Task { await Notifications.reschedule(events: events, settings: settings) }
+        }
+    }
+
+    /// Recopie des fiches venues d'ailleurs — le carnet d'adresses du
+    /// téléphone. Les doublons (même numéro, même courriel, même nom) sont
+    /// écartés, y compris entre les fiches importées elles-mêmes. Renvoie le
+    /// nombre de fiches réellement ajoutées.
+    @discardableResult
+    func importContacts(_ incoming: [Contact]) -> Int {
+        var known = Set(contacts.map(\.matchKey))
+        var added = 0
+        var agendaChanged = false
+        for var contact in incoming {
+            guard known.insert(contact.matchKey).inserted else { continue }
+            if contacts.contains(where: { $0.id == contact.id }) { contact.id = UUID() }
+            contacts.append(contact)
+            if syncBirthdayEvent(for: contact) { agendaChanged = true }
+            added += 1
+        }
+        guard added > 0 else { return 0 }
+        persistNow()
+        if agendaChanged {
+            Task { await Notifications.reschedule(events: events, settings: settings) }
+        }
+        return added
     }
 
     func deleteContact(id: UUID) {
         contacts.removeAll { $0.id == id }
+        let agendaChanged = removeBirthdayEvents(of: id)
         scheduleSave()
+        if agendaChanged {
+            Task { await Notifications.reschedule(events: events, settings: settings) }
+        }
+    }
+
+    /// Reporte la date de naissance d'une fiche dans l'agenda : un rendez-vous
+    /// toute la journée, tous les ans, rappelé la veille, rattaché à la
+    /// personne. Effacer la date d'anniversaire retire le rendez-vous.
+    ///
+    /// Renvoie `true` si l'agenda a changé.
+    @discardableResult
+    private func syncBirthdayEvent(for contact: Contact) -> Bool {
+        guard let day = contact.birthday else { return removeBirthdayEvents(of: contact.id) }
+
+        guard let i = events.firstIndex(where: { $0.birthdayContactID == contact.id }) else {
+            guard let event = AgendaEvent.birthday(for: contact) else { return false }
+            events.append(event)
+            return true
+        }
+
+        var event = events[i]
+        event.applyBirthday(of: contact, on: day)
+        guard event != events[i] else { return false }
+        events[i] = event
+        return true
+    }
+
+    @discardableResult
+    private func removeBirthdayEvents(of contactID: UUID) -> Bool {
+        let before = events.count
+        events.removeAll { $0.birthdayContactID == contactID }
+        return events.count != before
     }
 
     func birthdays(on day: Date) -> [Contact] {

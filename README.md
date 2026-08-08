@@ -103,7 +103,16 @@ calculs, eux, restent sur la bande.
 
 Fiches groupées (Famille, Mer, Santé, Maison…), favoris, recherche, et les
 gestes utiles en un pouce : appeler, écrire, envoyer un courriel, ouvrir le plan.
-Les anniversaires renseignés ici remontent dans l'éphéméride.
+Les anniversaires renseignés ici remontent dans l'éphéméride et s'inscrivent à
+l'agenda : toute la journée, tous les ans, rappelés la veille.
+
+**Import du carnet du téléphone** (bouton ⤓ en haut) : la liste des contacts
+s'affiche, on **coche celles qu'on veut** — une par une, ou toutes d'un coup —
+et on choisit le groupe d'arrivée. Les fiches déjà présentes sont signalées
+« Déjà là » et ne peuvent pas se dupliquer : on rapproche sur le numéro, à
+défaut sur le courriel, à défaut sur le nom. C'est une **recopie unique**, pas
+une synchronisation : les contacts du téléphone ne sont jamais modifiés, et une
+fiche importée vit ensuite sa vie dans l'annuaire.
 
 ---
 
@@ -219,6 +228,7 @@ Sources/
     Store/                      état, persistance, photographie pour le widget
     Services/                   position, notifications, App Intent, chargeur du jour
     Design/Theme.swift          couleurs, typographie, papier, bord déchiré
+                                (charte claire : `Ink`, échelle de corps : `Type`)
   App/                          les quatre écrans + réglages
   Widget/                       widgets écran d'accueil et écran verrouillé
 Tools/                          générateur d'icône, tests du moteur
@@ -233,6 +243,15 @@ hors couverture ; seules la marée et la météo demandent Internet.
 recherche de ses extrêmes locaux, puis l'instant exact de chaque pleine ou basse
 mer est affiné par interpolation parabolique sur trois points — d'où des heures
 à la minute plutôt qu'à l'heure ronde.
+
+**Charte et lisibilité.** L'application se lit en encre sombre sur ivoire, une
+seule fois pour toutes : pas de mode sombre, pas de bascule. `Type.resolve`
+applique un plancher aux petits corps avant le grossissement général, si bien
+que les mentions à 9 points remontent proportionnellement plus que les titres ;
+`Type.icon`, `Type.control` et `Type.tabBarInset` font suivre la même échelle
+aux pictogrammes, aux boutons et à la place réservée sous les écrans. Le réglage
+« Taille du texte » d'iOS s'ajoute par-dessus, borné à +30 % pour que les
+colonnes chiffrées de la bande restent alignées.
 
 **Persistance.** Quatre fichiers JSON dans le conteneur du groupe d'app, plus
 une `snapshot.json` compacte que le widget lit sans réveiller l'application.

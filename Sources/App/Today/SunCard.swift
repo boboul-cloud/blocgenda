@@ -28,18 +28,18 @@ struct SunCard: View {
     }
 
     var body: some View {
-        ChassisCard(title: "Soleil", systemImage: "sun.max.fill", accent: Ink.amber) {
+        ChassisCard(title: "Soleil", systemImage: "sun.max.fill", accent: Ink.amberDeep) {
             VStack(spacing: 14) {
                 SunArc(progress: progress, isDay: isDaytime)
                     .frame(height: 96)
 
                 HStack(alignment: .top) {
-                    timeBlock(icon: "sunrise.fill", label: "Lever", date: sun?.sunrise, tint: Ink.amber)
+                    timeBlock(icon: "sunrise.fill", label: "Lever", date: sun?.sunrise, tint: Ink.amberDeep)
                     Spacer()
                     VStack(spacing: 2) {
                         Text(sun?.dayLength.map { Fmt.duration($0) } ?? "—")
                             .font(Type.ui(15, weight: .bold))
-                            .foregroundStyle(Ink.paper)
+                            .foregroundStyle(Ink.text)
                         Text("de jour")
                             .font(Type.ui(10))
                             .foregroundStyle(Ink.textFaint)
@@ -57,12 +57,12 @@ struct SunCard: View {
                     Divider().overlay(Ink.chassisLine)
                     HStack(spacing: 12) {
                         Image(systemName: weather.symbolName)
-                            .font(.system(size: 22))
+                            .font(Type.icon(22))
                             .symbolRenderingMode(.multicolor)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("\(Int(weather.temperature.rounded())) °C · \(weather.label)")
                                 .font(Type.ui(13, weight: .semibold))
-                                .foregroundStyle(Ink.paper)
+                                .foregroundStyle(Ink.text)
                             Text("ressenti \(Int(weather.apparentTemperature.rounded())) °C · vent \(Int(weather.windSpeed.rounded())) km/h \(weather.windCardinal) · force \(weather.beaufort)")
                                 .font(Type.ui(10.5))
                                 .foregroundStyle(Ink.textFaint)
@@ -71,7 +71,7 @@ struct SunCard: View {
                         if let min = weather.minTemperature, let max = weather.maxTemperature {
                             VStack(alignment: .trailing, spacing: 1) {
                                 Text("\(Int(max.rounded()))°").font(Type.ui(12, weight: .semibold))
-                                    .foregroundStyle(Ink.amber)
+                                    .foregroundStyle(Ink.amberDeep)
                                 Text("\(Int(min.rounded()))°").font(Type.ui(12))
                                     .foregroundStyle(Ink.sea)
                             }
@@ -90,11 +90,11 @@ struct SunCard: View {
     private func timeBlock(icon: String, label: String, date: Date?, tint: Color) -> some View {
         VStack(spacing: 3) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
+                .font(Type.icon(13, weight: .semibold))
                 .foregroundStyle(tint)
             Text(date.map { Fmt.hm.string(from: $0) } ?? "—")
                 .font(Type.tape(14, weight: .semibold))
-                .foregroundStyle(Ink.paper)
+                .foregroundStyle(Ink.text)
             Text(label)
                 .font(Type.ui(10))
                 .foregroundStyle(Ink.textFaint)
@@ -172,7 +172,7 @@ struct LightCard: View {
         ChassisCard(title: "Lumière", systemImage: "camera.filters", accent: Ink.violet) {
             VStack(spacing: 10) {
                 row(label: "Heure dorée du matin",
-                    from: sun?.sunrise, to: sun?.goldenHourEnd, color: Ink.amber)
+                    from: sun?.sunrise, to: sun?.goldenHourEnd, color: Ink.amberDeep)
                 row(label: "Heure dorée du soir",
                     from: sun?.goldenHour, to: sun?.sunset, color: Ink.amberDeep)
                 row(label: "Heure bleue",
@@ -189,7 +189,7 @@ struct LightCard: View {
             Circle().fill(color).frame(width: 6, height: 6)
             Text(label)
                 .font(Type.ui(12, weight: active ? .bold : .regular))
-                .foregroundStyle(active ? Ink.paper : Ink.textSoft)
+                .foregroundStyle(active ? Ink.text : Ink.textSoft)
             if active {
                 Text("en cours")
                     .font(Type.ui(9, weight: .bold))

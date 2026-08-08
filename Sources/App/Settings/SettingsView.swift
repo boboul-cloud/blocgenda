@@ -4,7 +4,8 @@ import UserNotifications
 struct SettingsView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @State private var notificationsAllowed = false
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var showArchive = false
 
     var body: some View {
@@ -38,13 +39,23 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    if !notificationsAllowed {
+                    switch notificationStatus {
+                    case .notDetermined:
                         Button("Autoriser les notifications") {
                             Task {
-                                notificationsAllowed = await Notifications.requestAuthorization()
+                                notificationStatus = await Notifications.ensureAuthorization()
                                 await reschedule()
                             }
                         }
+                    case .denied:
+                        // iOS ne repose jamais la question : le seul chemin
+                        // ouvert est le réglage système.
+                        Button("Ouvrir les Réglages d’iOS") {
+                            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                            UIApplication.shared.open(url)
+                        }
+                    default:
+                        EmptyView()
                     }
                     Toggle("Le point du matin", isOn: $store.settings.morningBriefingEnabled)
                     if store.settings.morningBriefingEnabled {
@@ -63,7 +74,9 @@ struct SettingsView: View {
                 } header: {
                     Text("Notifications")
                 } footer: {
-                    Text("Le point du matin résume le saint du jour, le soleil et le lieu. Le bilan du soir invite à faire le point sur le rouleau.")
+                    Text(notificationStatus == .denied
+                         ? "iOS bloque les rappels de Blocgenda : rien n’arrivera, quels que soient les réglages ci-dessus. L’autorisation se rend dans Réglages ▸ Blocgenda ▸ Notifications."
+                         : "Le point du matin résume le saint du jour, le soleil et le lieu. Le bilan du soir invite à faire le point sur le rouleau.")
                 }
 
                 Section("Calculatrice") {
@@ -160,11 +173,15 @@ struct SettingsView: View {
             .sheet(isPresented: $showArchive) {
                 ArchiveView().environment(store)
             }
-            .task {
-                notificationsAllowed = await Notifications.authorizationStatus() == .authorized
+            .task { notificationStatus = await Notifications.authorizationStatus() }
+            // L'autorisation a pu changer dans les Réglages d'iOS pendant que
+            // l'écran restait ouvert : on relit l'état au retour.
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                Task { notificationStatus = await Notifications.authorizationStatus() }
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 
     private func reschedule() async {
@@ -251,6 +268,6 @@ struct ArchiveView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 }

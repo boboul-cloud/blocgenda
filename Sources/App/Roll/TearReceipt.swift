@@ -82,7 +82,9 @@ struct TearReceipt: View {
 
             TornEdge(seed: 23, atBottom: true).fill(Ink.paper).frame(height: 12)
         }
-        .frame(width: 340)
+        // La largeur suit la typographie : depuis qu'elle a grossi, un ticket
+        // de 340 pt coupait les libellés au milieu.
+        .frame(width: Type.gutter(340))
         .background(Ink.paper)
     }
 

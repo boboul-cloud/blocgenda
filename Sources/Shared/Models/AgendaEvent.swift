@@ -44,10 +44,15 @@ struct AgendaEvent: Identifiable, Codable, Hashable, Sendable {
     var place: String = ""
     var colorIndex: Int = 0
     var contactID: UUID? = nil
+    /// Fiche dont ce rendez-vous est l'anniversaire. Renseigné uniquement pour
+    /// les rendez-vous que l'annuaire tient à jour tout seul.
+    var birthdayContactID: UUID? = nil
     /// Jours (minuit) où l'occurrence a été cochée — permet de valider une récurrence.
     var completedDays: Set<Date> = []
 
     var end: Date { start.addingTimeInterval(isAllDay ? 0 : duration) }
+
+    var isBirthday: Bool { birthdayContactID != nil }
 
     func isCompleted(on day: Date) -> Bool {
         completedDays.contains(Calendar.current.startOfDay(for: day))
@@ -84,6 +89,48 @@ struct AgendaEvent: Identifiable, Codable, Hashable, Sendable {
 
         let time = cal.dateComponents([.hour, .minute], from: start)
         return cal.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: target)
+    }
+}
+
+// MARK: - Anniversaires venus de l'annuaire
+
+extension AgendaEvent {
+    /// Rappel « la veille », en minutes avant le début.
+    static let dayBeforeReminder = 24 * 60
+
+    /// Le rendez-vous couvre la journée entière : cette heure ne s'affiche
+    /// nulle part, elle sert au rappel, pour qu'il tombe la veille au matin
+    /// plutôt qu'à minuit.
+    static let birthdayHour = 9
+
+    static func birthdayTitle(for contact: Contact) -> String {
+        "Anniversaire de \(contact.fullName)"
+    }
+
+    /// Le rendez-vous annuel correspondant à la date de naissance d'une fiche,
+    /// ou `nil` si la fiche n'en porte pas.
+    static func birthday(for contact: Contact, calendar: Calendar = .current) -> AgendaEvent? {
+        guard let day = contact.birthday else { return nil }
+        var event = AgendaEvent()
+        event.reminders = [dayBeforeReminder]
+        event.colorIndex = contact.colorIndex
+        event.applyBirthday(of: contact, on: day, calendar: calendar)
+        return event
+    }
+
+    /// Reporte sur le rendez-vous ce qui vient de la fiche — et rien d'autre :
+    /// les rappels, la couleur ou les notes ajoutés depuis l'agenda survivent à
+    /// une modification de l'annuaire.
+    ///
+    /// Le début garde l'année de naissance : la répétition annuelle part de là,
+    /// et l'âge reste calculable.
+    mutating func applyBirthday(of contact: Contact, on day: Date, calendar: Calendar = .current) {
+        birthdayContactID = contact.id
+        contactID = contact.id
+        title = Self.birthdayTitle(for: contact)
+        start = calendar.date(bySettingHour: Self.birthdayHour, minute: 0, second: 0, of: day) ?? day
+        isAllDay = true
+        repeatRule = .yearly
     }
 }
 

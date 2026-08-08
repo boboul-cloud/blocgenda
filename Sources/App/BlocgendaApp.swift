@@ -16,8 +16,8 @@ struct BlocgendaApp: App {
             RootView()
                 .environment(store)
                 .environment(location)
-                .preferredColorScheme(.dark)
-                .tint(Ink.amber)
+                .preferredColorScheme(.light)
+                .tint(Ink.amberDeep)
                 .task { await bootstrap() }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -39,6 +39,8 @@ struct BlocgendaApp: App {
         }
         if store.settings.followLocation { location.request() }
         await store.refreshDay()
+        // Sans cette demande, tout ce qui suit est programmé pour rien.
+        await Notifications.ensureAuthorization()
         await Notifications.reschedule(events: store.events, settings: store.settings)
         await Notifications.scheduleGoldenHour(settings: store.settings)
     }

@@ -3,6 +3,7 @@ import SwiftUI
 /// L'agenda : une bande de jours en haut, la journée choisie en dessous.
 struct AgendaView: View {
     @Environment(Store.self) private var store
+    @Environment(Navigator.self) private var nav
     @State private var selectedDay = Calendar.current.startOfDay(for: Date())
     @State private var editing: AgendaEvent?
     @State private var weekOffset = 0
@@ -60,9 +61,9 @@ struct AgendaView: View {
                         editing = event
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.black.opacity(0.85))
-                            .frame(width: 34, height: 34)
+                            .font(Type.icon(15, weight: .bold))
+                            .foregroundStyle(Ink.onAccent)
+                            .frame(width: Type.control(34), height: Type.control(34))
                             .background(Circle().fill(Ink.amber))
                     }
                     .accessibilityIdentifier("agenda.nouveau")
@@ -122,11 +123,11 @@ struct AgendaView: View {
                      reference: referenceDate,
                      tagSuggestions: store.frequentTags())
 
-            Color.clear.frame(height: 62) // place pour la barre d'onglets
+            Color.clear.frame(height: Type.tabBarInset) // place pour la barre d’onglets
         }
         .background(Ink.chassis)
         .sheet(item: $editing) { event in
-            EventEditor(event: event).environment(store)
+            EventEditor(event: event).environment(store).environment(nav)
         }
     }
 
@@ -181,7 +182,7 @@ struct WeekStrip: View {
         VStack(spacing: 6) {
             HStack {
                 Button { withAnimation(.snappy) { offset -= 1 } } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 12, weight: .bold))
+                    Image(systemName: "chevron.left").font(Type.icon(12, weight: .bold))
                 }
                 Spacer()
                 Text(monthLabel)
@@ -189,7 +190,7 @@ struct WeekStrip: View {
                     .foregroundStyle(Ink.textSoft)
                 Spacer()
                 Button { withAnimation(.snappy) { offset += 1 } } label: {
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+                    Image(systemName: "chevron.right").font(Type.icon(12, weight: .bold))
                 }
             }
             .foregroundStyle(Ink.textFaint)
@@ -240,14 +241,14 @@ struct DayChip: View {
         VStack(spacing: 4) {
             Text(Fmt.weekdayLetter.string(from: day).uppercased())
                 .font(Type.ui(9, weight: .bold))
-                .foregroundStyle(isSelected ? .black.opacity(0.6) : Ink.textFaint)
+                .foregroundStyle(isSelected ? Ink.onAccent.opacity(0.65) : Ink.textFaint)
             Text("\(Calendar.current.component(.day, from: day))")
                 .font(Type.ui(16, weight: .semibold))
-                .foregroundStyle(isSelected ? .black.opacity(0.9) : (isToday ? Ink.amber : Ink.paper))
+                .foregroundStyle(isSelected ? Ink.onAccent : (isToday ? Ink.amberDeep : Ink.text))
             HStack(spacing: 2) {
                 ForEach(0..<min(count, 3), id: \.self) { _ in
                     Circle()
-                        .fill(isSelected ? Color.black.opacity(0.5) : Ink.sea)
+                        .fill(isSelected ? Ink.onAccent.opacity(0.55) : Ink.sea)
                         .frame(width: 3.5, height: 3.5)
                 }
             }
@@ -271,15 +272,23 @@ struct EventRow: View {
     let occurrence: EventOccurrence
     var onTap: () -> Void
     var onToggle: () -> Void
+    @Environment(Store.self) private var store
+    @Environment(Navigator.self) private var nav
 
     private var event: AgendaEvent { occurrence.event }
+
+    /// La fiche dont ce rendez-vous est l'anniversaire, si elle est encore là.
+    private var birthdayContact: Contact? {
+        guard let id = event.birthdayContactID else { return nil }
+        return store.contacts.first { $0.id == id }
+    }
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(spacing: 2) {
                 if event.isAllDay {
                     Image(systemName: "sun.horizon.fill")
-                        .font(.system(size: 13))
+                        .font(Type.icon(13))
                         .foregroundStyle(Ink.textFaint)
                     Text("jour")
                         .font(Type.ui(9))
@@ -287,7 +296,7 @@ struct EventRow: View {
                 } else {
                     Text(Fmt.hm.string(from: occurrence.start))
                         .font(Type.tape(13, weight: .semibold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     Text(Fmt.hm.string(from: occurrence.end))
                         .font(Type.tape(10))
                         .foregroundStyle(Ink.textFaint)
@@ -303,7 +312,7 @@ struct EventRow: View {
                 Text(event.title)
                     .font(Type.ui(14, weight: .semibold))
                     .strikethrough(occurrence.isCompleted, color: Ink.textFaint)
-                    .foregroundStyle(occurrence.isCompleted ? Ink.textFaint : Ink.paper)
+                    .foregroundStyle(occurrence.isCompleted ? Ink.textFaint : Ink.text)
                 HStack(spacing: 6) {
                     if !event.place.isEmpty {
                         Label(event.place, systemImage: "mappin")
@@ -323,13 +332,19 @@ struct EventRow: View {
                         .foregroundStyle(Ink.textSoft)
                         .lineLimit(2)
                 }
+                if let contact = birthdayContact {
+                    BirthdayContactLink(contact: contact, day: occurrence.start) {
+                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                        withAnimation(.snappy) { nav.reveal(contact: contact.id) }
+                    }
+                }
             }
 
             Spacer(minLength: 0)
 
             Button(action: onToggle) {
                 Image(systemName: occurrence.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 19))
+                    .font(Type.icon(19))
                     .foregroundStyle(occurrence.isCompleted ? Ink.moss : Ink.chassisLine)
             }
             .buttonStyle(.plain)
@@ -343,6 +358,41 @@ struct EventRow: View {
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+    }
+}
+
+/// Le renvoi d'un anniversaire vers la fiche qui le porte. L'agenda ne redit
+/// pas ce que l'annuaire sait déjà — le numéro, l'adresse, la photo de famille :
+/// il ouvre la fiche, là où tout cela se trouve.
+struct BirthdayContactLink: View {
+    let contact: Contact
+    /// Jour de l'occurrence : l'âge affiché est celui atteint ce jour-là.
+    let day: Date
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Avatar(contact: contact, size: 20)
+                Text(ageLabel.isEmpty ? "Voir la fiche" : "Voir la fiche · \(ageLabel)")
+                    .font(Type.ui(11, weight: .semibold))
+                Image(systemName: "chevron.right")
+                    .font(Type.icon(8, weight: .bold))
+            }
+            .foregroundStyle(Ink.sea)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Ink.sea.opacity(0.14)))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 2)
+        .accessibilityLabel("Voir la fiche de \(contact.fullName) dans l’annuaire")
+    }
+
+    private var ageLabel: String {
+        guard let age = contact.age(on: day) else { return "" }
+        return "\(age) ans"
     }
 }
 
@@ -363,13 +413,13 @@ struct AgendaTapeRow: View {
                     Image(systemName: "text.alignleft").foregroundStyle(Ink.textFaint)
                 }
             }
-            .font(.system(size: 14, weight: .medium))
+            .font(Type.icon(14, weight: .medium))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.text)
                     .font(Type.ui(13))
                     .strikethrough(entry.done, color: Ink.textFaint)
-                    .foregroundStyle(entry.done ? Ink.textFaint : Ink.paper)
+                    .foregroundStyle(entry.done ? Ink.textFaint : Ink.text)
                     .multilineTextAlignment(.leading)
                 if !entry.tags.isEmpty {
                     Text(entry.tags.map { "#\($0)" }.joined(separator: " "))
@@ -409,7 +459,7 @@ struct EmptyDay: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "calendar.badge.checkmark")
-                .font(.system(size: 26, weight: .light))
+                .font(Type.icon(26, weight: .light))
                 .foregroundStyle(Ink.textFaint)
             Text("Rien de prévu \(Fmt.dayTitle(day).lowercased()).")
                 .font(Type.ui(14, weight: .medium))

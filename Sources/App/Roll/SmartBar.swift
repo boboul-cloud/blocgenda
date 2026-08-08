@@ -44,9 +44,9 @@ struct SmartBar: View {
                         if showKeypad { focused = false }
                     } label: {
                         Image(systemName: showKeypad ? "keyboard.chevron.compact.down" : "number.square")
-                            .font(.system(size: 19, weight: .medium))
-                            .foregroundStyle(showKeypad ? Ink.amber : Ink.textFaint)
-                            .frame(width: 38, height: 38)
+                            .font(Type.icon(19, weight: .medium))
+                            .foregroundStyle(showKeypad ? Ink.amberDeep : Ink.textFaint)
+                            .frame(width: Type.control(38), height: Type.control(38))
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("barre.clavier")
@@ -63,7 +63,7 @@ struct SmartBar: View {
                             .lineLimit(1)
                     }
                     .font(Type.tape(14))
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.text)
                     .lineLimit(1...4)
                     .focused($focused)
                     .autocorrectionDisabled()
@@ -73,9 +73,9 @@ struct SmartBar: View {
 
                 Button(action: onSubmit) {
                     Image(systemName: "arrow.down.doc.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(text.isEmpty ? Ink.textFaint : Color.black.opacity(0.85))
-                        .frame(width: 38, height: 38)
+                        .font(Type.icon(16, weight: .bold))
+                        .foregroundStyle(text.isEmpty ? Ink.textFaint : Ink.onAccent)
+                        .frame(width: Type.control(38), height: Type.control(38))
                         .background(
                             Circle().fill(text.isEmpty ? Ink.chassisLine : Ink.amber)
                         )
@@ -125,12 +125,12 @@ struct TagSuggestions: View {
                 Button { onPick("") } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "number")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(Type.icon(10, weight: .bold))
                         if tags.isEmpty {
                             Text("étiqueter").font(Type.ui(11, weight: .semibold))
                         }
                     }
-                    .foregroundStyle(.black.opacity(0.8))
+                    .foregroundStyle(Ink.onAccent)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
                     .background(Capsule().fill(Ink.amber))
@@ -158,7 +158,7 @@ struct TagSuggestions: View {
             .padding(.horizontal, 18)
         }
         .buttonStyle(.plain)
-        .frame(height: 28)
+        .frame(height: Type.control(28))
     }
 }
 
@@ -170,7 +170,7 @@ struct IntentPreview: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .bold))
+                .font(Type.icon(10, weight: .bold))
             Text(label)
                 .font(Type.ui(11, weight: .semibold))
             Spacer(minLength: 0)
@@ -197,7 +197,7 @@ struct IntentPreview: View {
 
     private var color: Color {
         switch parsed.intent {
-        case .calculation: return Ink.amber
+        case .calculation: return Ink.amberDeep
         case .task: return Ink.moss
         case .event: return Ink.sea
         case .note: return Ink.textFaint

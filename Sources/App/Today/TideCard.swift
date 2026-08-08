@@ -77,7 +77,7 @@ struct TideCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(next.label)
                         .font(Type.ui(13, weight: .bold))
-                        .foregroundStyle(next.isHigh ? Ink.sea : Ink.amber)
+                        .foregroundStyle(next.isHigh ? Ink.sea : Ink.amberDeep)
                     Text("\(Fmt.hm.string(from: next.date)) · \(Fmt.relative(next.date, from: now))")
                         .font(Type.ui(11))
                         .foregroundStyle(Ink.textFaint)
@@ -88,12 +88,12 @@ struct TideCard: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(String(format: "%+.2f m", height))
                         .font(Type.tape(15, weight: .semibold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     if let rising = tide?.isRising(at: now) {
                         Label(rising ? "montante" : "descendante",
                               systemImage: rising ? "arrow.up.right" : "arrow.down.right")
                             .font(Type.ui(10, weight: .medium))
-                            .foregroundStyle(rising ? Ink.sea : Ink.amber)
+                            .foregroundStyle(rising ? Ink.sea : Ink.amberDeep)
                     }
                 }
             }
@@ -120,7 +120,7 @@ struct TideCard: View {
             ForEach(todayMarks) { mark in
                 PointMark(x: .value("Heure", mark.date),
                           y: .value("Hauteur", mark.height))
-                    .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amber)
+                    .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amberDeep)
                     .symbolSize(40)
                     .annotation(position: mark.isHigh ? .top : .bottom, spacing: 2) {
                         Text(Fmt.hm.string(from: mark.date))
@@ -130,7 +130,7 @@ struct TideCard: View {
             }
 
             RuleMark(x: .value("Maintenant", now))
-                .foregroundStyle(Ink.paper.opacity(0.4))
+                .foregroundStyle(Ink.text.opacity(0.35))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
         }
         .chartXAxis {
@@ -156,18 +156,18 @@ struct TideCard: View {
             ForEach(todayMarks) { mark in
                 VStack(spacing: 1) {
                     Image(systemName: mark.symbol)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(Type.icon(9, weight: .bold))
                     Text(Fmt.hm.string(from: mark.date))
                         .font(Type.tape(11, weight: .semibold))
                     Text(String(format: "%.2f m", mark.height))
                         .font(Type.tape(9))
                         .foregroundStyle(Ink.textFaint)
                 }
-                .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amber)
+                .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amberDeep)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
                 .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(Color.black.opacity(0.22)))
+                    .fill(Ink.sunken))
             }
         }
     }
@@ -205,7 +205,7 @@ struct MoonCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(illumination?.name ?? "—")
                         .font(Type.ui(14, weight: .semibold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     Text("\(Int(((illumination?.fraction ?? 0) * 100).rounded())) % éclairée · \(String(format: "%.1f", illumination?.age ?? 0)) jours")
                         .font(Type.ui(11))
                         .foregroundStyle(Ink.textFaint)
@@ -236,8 +236,16 @@ struct MoonCard: View {
 }
 
 /// Disque lunaire dessiné selon la phase : le terminateur est une ellipse.
+///
+/// Sur une carte claire, un croissant crème sur fond crème ne se voit pas :
+/// la lune garde donc son propre morceau de ciel, un rond bleu nuit, seule
+/// note sombre de l'application — et c'est bien ce qu'on vient y chercher.
 struct MoonDisc: View {
     let phase: Double
+
+    /// Le ciel derrière la lune, et la lumière qu'elle renvoie.
+    private static let sky = Color(hex: 0x2A3350)
+    private static let lit = Color(hex: 0xF7E8C2)
 
     var body: some View {
         Canvas { context, size in
@@ -245,14 +253,14 @@ struct MoonDisc: View {
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let disc = Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r,
                                               width: r * 2, height: r * 2))
-            context.fill(disc, with: .color(Ink.chassisLine))
+            context.fill(disc, with: .color(Self.sky))
 
             // Le croissant se construit en deux temps : un demi-disque éclairé
             // du bon côté, puis l'ellipse du terminateur qui le ronge ou l'élargit.
             let k = (1 - cos(phase * 2 * .pi)) / 2   // fraction éclairée
             let waxing = phase < 0.5
-            let light = Ink.paper.opacity(0.92)
-            let dark = Ink.chassisLine
+            let light = Self.lit
+            let dark = Self.sky
 
             var half = Path()
             half.addArc(center: center, radius: r,
@@ -268,7 +276,7 @@ struct MoonDisc: View {
                                                     height: r * 2))
             context.fill(terminator, with: .color(k > 0.5 ? light : dark))
 
-            context.stroke(disc, with: .color(Ink.chassisLine), lineWidth: 1)
+            context.stroke(disc, with: .color(Self.sky), lineWidth: 1)
         }
     }
 }
@@ -285,7 +293,7 @@ struct SolunarCard: View {
                 HStack(spacing: 4) {
                     ForEach(0..<4, id: \.self) { i in
                         Image(systemName: i < rating ? "star.fill" : "star")
-                            .font(.system(size: 11))
+                            .font(Type.icon(11))
                             .foregroundStyle(i < rating ? Ink.moss : Ink.chassisLine)
                     }
                     Text(ratingLabel)
@@ -305,7 +313,7 @@ struct SolunarCard: View {
                                 .frame(width: 6, height: 6)
                             Text(period.label)
                                 .font(Type.ui(11.5, weight: period.contains(now) ? .bold : .regular))
-                                .foregroundStyle(period.contains(now) ? Ink.paper : Ink.textSoft)
+                                .foregroundStyle(period.contains(now) ? Ink.text : Ink.textSoft)
                             if period.contains(now) {
                                 Text("maintenant")
                                     .font(Type.ui(9, weight: .bold))

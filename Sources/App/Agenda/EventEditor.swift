@@ -3,6 +3,7 @@ import SwiftUI
 /// Création et modification d'un rendez-vous.
 struct EventEditor: View {
     @Environment(Store.self) private var store
+    @Environment(Navigator.self) private var nav
     @Environment(\.dismiss) private var dismiss
     @State private var draft: AgendaEvent
     @State private var showDeleteConfirm = false
@@ -11,9 +12,16 @@ struct EventEditor: View {
         _draft = State(initialValue: event)
     }
 
+    /// La fiche dont ce rendez-vous est l'anniversaire, si elle est encore là.
+    private var birthdayContact: Contact? {
+        guard let id = draft.birthdayContactID else { return nil }
+        return store.contacts.first { $0.id == id }
+    }
+
     private let reminderChoices: [(Int, String)] = [
         (0, "À l’heure"), (5, "5 min avant"), (15, "15 min avant"),
-        (30, "30 min avant"), (60, "1 h avant"), (1440, "La veille")
+        (30, "30 min avant"), (60, "1 h avant"),
+        (AgendaEvent.dayBeforeReminder, "La veille")
     ]
 
     var body: some View {
@@ -58,10 +66,10 @@ struct EventEditor: View {
                             }
                         } label: {
                             HStack {
-                                Text(label).foregroundStyle(Ink.paper)
+                                Text(label).foregroundStyle(Ink.text)
                                 Spacer()
                                 if draft.reminders.contains(minutes) {
-                                    Image(systemName: "bell.fill").foregroundStyle(Ink.amber)
+                                    Image(systemName: "bell.fill").foregroundStyle(Ink.amberDeep)
                                 }
                             }
                         }
@@ -75,7 +83,7 @@ struct EventEditor: View {
                                 .fill(Ink.label(i))
                                 .frame(width: 26, height: 26)
                                 .overlay(
-                                    Circle().strokeBorder(Ink.paper,
+                                    Circle().strokeBorder(Ink.text,
                                                           lineWidth: draft.colorIndex == i ? 2 : 0)
                                 )
                                 .onTapGesture { draft.colorIndex = i }
@@ -83,12 +91,34 @@ struct EventEditor: View {
                     }
                 }
 
-                Section("Personne") {
+                Section {
                     Picker("Contact", selection: $draft.contactID) {
                         Text("Aucun").tag(UUID?.none)
                         ForEach(store.contacts) { contact in
                             Text(contact.fullName).tag(UUID?.some(contact.id))
                         }
+                    }
+                    if let contact = birthdayContact {
+                        Button {
+                            dismiss()
+                            nav.reveal(contact: contact.id)
+                        } label: {
+                            HStack(spacing: 10) {
+                                Avatar(contact: contact, size: 26)
+                                Text("Voir \(contact.fullName) dans l’annuaire")
+                                    .foregroundStyle(Ink.text)
+                                Spacer(minLength: 4)
+                                Image(systemName: "chevron.right")
+                                    .font(Type.icon(11, weight: .bold))
+                                    .foregroundStyle(Ink.textFaint)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Personne")
+                } footer: {
+                    if draft.isBirthday {
+                        Text("Anniversaire tenu par l’annuaire : l’intitulé et la date suivent la fiche.")
                     }
                 }
 
@@ -127,6 +157,6 @@ struct EventEditor: View {
                 Button("Annuler", role: .cancel) {}
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 }

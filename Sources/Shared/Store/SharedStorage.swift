@@ -78,6 +78,11 @@ struct AppSettings: Codable, Hashable, Sendable {
     var vatRate: Double = 20
     var paperTint: Int = 0
     var hasSeededSample: Bool = false
+    /// Report unique des anniversaires de l'annuaire vers l'agenda.
+    /// Optionnel à dessein : dans un fichier écrit par une version antérieure
+    /// la clé manque, et un booléen sec ferait échouer toute la relecture des
+    /// réglages. Absent vaut « pas encore fait ».
+    var hasImportedBirthdays: Bool? = nil
 
     /// Lieu réellement utilisé pour les marées.
     var tideReference: Place { tidePort ?? place }

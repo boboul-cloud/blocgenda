@@ -53,6 +53,63 @@ check("note chiffrée", intent("essence 62,30"), "note « essence » · 62,3")
 let tagged = SmartInput.parse("courses 41,15 #maison", reference: ref)!
 check("étiquettes", tagged.tags.joined(separator: ","), "maison")
 
+print("\n── Anniversaires portés à l'agenda ──")
+
+var lea = Contact(firstName: "Léa", lastName: "Kerdraon")
+lea.birthday = cal.date(from: DateComponents(year: 1984, month: 10, day: 3))
+let fete = AgendaEvent.birthday(for: lea)!
+
+check("intitulé", fete.title, "Anniversaire de Léa Kerdraon")
+check("toute la journée", "\(fete.isAllDay)", "true")
+check("répétition", fete.repeatRule.label, "Tous les ans")
+check("rappel la veille", fete.reminders.map(String.init).joined(), "1440")
+check("personne concernée", "\(fete.contactID == lea.id)", "true")
+
+// La répétition annuelle part de l'année de naissance : elle retombe sur le
+// jour dit, toutes les années suivantes, et sur aucun autre jour.
+func jourDeFete(_ y: Int, _ m: Int, _ d: Int) -> String {
+    let day = cal.date(from: DateComponents(year: y, month: m, day: d))!
+    return fete.occurrence(on: day).map { df.string(from: $0) } ?? "aucune"
+}
+check("occurrence 2026", jourDeFete(2026, 10, 3), "03/10 09:00")
+check("occurrence 2031", jourDeFete(2031, 10, 3), "03/10 09:00")
+check("la veille n'est pas le jour", jourDeFete(2026, 10, 2), "aucune")
+
+// Le rappel de la veille tombe au matin, pas à minuit.
+let rappel = fete.occurrence(on: cal.date(from: DateComponents(year: 2026, month: 10, day: 3))!)!
+    .addingTimeInterval(-Double(AgendaEvent.dayBeforeReminder) * 60)
+check("heure du rappel", df.string(from: rappel), "02/10 09:00")
+
+print("\n── Import de l'annuaire ──")
+
+// Deux écritures du même numéro désignent la même personne : la fiche reprise
+// du carnet du téléphone ne doit pas doubler celle déjà saisie à la main.
+let saisi = Contact(firstName: "Marie", lastName: "Lambert", phone: "06 12 34 56 78")
+let repris = Contact(firstName: "Marie", lastName: "Lambert", phone: "+33 6 12 34 56 78")
+check("même numéro, même fiche", "\(saisi.matchKey == repris.matchKey)", "true")
+
+let autre = Contact(firstName: "Yann", lastName: "Le Goff", phone: "06 98 76 54 32")
+check("numéro différent, autre fiche", "\(saisi.matchKey == autre.matchKey)", "false")
+
+// Sans numéro, on se rabat sur le courriel, puis sur le nom.
+let parMel = Contact(firstName: "Anne", email: "Anne@Exemple.fr ")
+check("courriel normalisé", parMel.matchKey, "mel:anne@exemple.fr")
+check("à défaut, le nom", Contact(firstName: "Élodie", lastName: "Créac'h").matchKey,
+      "nom:elodie creac'h")
+
+// Beaucoup de dates de naissance n'ont pas d'année : l'anniversaire tombe
+// quand même tous les ans, mais l'âge ne s'invente pas.
+var sansAnnee = Contact(firstName: "Gwen")
+sansAnnee.birthday = cal.date(from: DateComponents(year: Contact.unknownBirthYear,
+                                                   month: 3, day: 12))
+check("anniversaire reconnu",
+      "\(sansAnnee.hasBirthday(on: cal.date(from: DateComponents(year: 2026, month: 3, day: 12))!))",
+      "true")
+check("âge inconnu", sansAnnee.age().map(String.init) ?? "—", "—")
+check("âge connu quand l'année l'est",
+      lea.age(on: cal.date(from: DateComponents(year: 2026, month: 10, day: 3))!).map(String.init) ?? "—",
+      "42")
+
 print("\n── Marées : détection des étales ──")
 
 func series(_ heights: [Double]) -> [TideDay.TideSample] {

@@ -40,6 +40,8 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Blocgenda utilise votre position pour calculer les marées, le lever et le coucher du soleil et la météo du lieu où vous vous trouvez.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Blocgenda recopie dans son annuaire les fiches que vous choisissez d’importer. Vos contacts ne sont ni modifiés ni envoyés ailleurs.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Blocgenda enregistre les morceaux de rouleau que vous déchirez dans vos photos.</string>
 	<key>CFBundleURLTypes</key>

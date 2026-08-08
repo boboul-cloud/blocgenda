@@ -13,11 +13,11 @@ struct SmallDayView: View {
             HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text(entry.date, format: .dateTime.day())
                     .font(Type.ui(26, weight: .bold))
-                    .foregroundStyle(Ink.amber)
+                    .foregroundStyle(Ink.amberDeep)
                 VStack(alignment: .leading, spacing: -1) {
                     Text(Fmt.weekdayLetter.string(from: entry.date).uppercased() + monthLetters)
                         .font(Type.ui(10, weight: .bold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     Text("sem. \(s.weekNumber)")
                         .font(Type.ui(8.5))
                         .foregroundStyle(Ink.textFaint)
@@ -39,13 +39,13 @@ struct SmallDayView: View {
                         .foregroundStyle(Ink.sea)
                     Text(title)
                         .font(Type.ui(11, weight: .semibold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                         .lineLimit(2)
                 }
             } else if let task = s.firstOpenTask {
                 Label(task, systemImage: "square")
                     .font(Type.ui(11))
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.text)
                     .lineLimit(2)
             }
 
@@ -80,11 +80,11 @@ struct MediumDayView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(entry.date, format: .dateTime.day())
                         .font(Type.ui(28, weight: .bold))
-                        .foregroundStyle(Ink.amber)
+                        .foregroundStyle(Ink.amberDeep)
                     VStack(alignment: .leading, spacing: -2) {
                         Text(Fmt.dayFull.string(from: entry.date).capitalizedFirst)
                             .font(Type.ui(10, weight: .semibold))
-                            .foregroundStyle(Ink.paper)
+                            .foregroundStyle(Ink.text)
                             .lineLimit(1)
                         Text("\(s.saintOfTheDay) · jour \(s.dayNumber)")
                             .font(Type.ui(9))
@@ -96,7 +96,7 @@ struct MediumDayView: View {
                 Divider().overlay(Ink.chassisLine)
 
                 HStack(spacing: 10) {
-                    stat(icon: "sunrise.fill", value: s.sunrise.map { Fmt.hm.string(from: $0) } ?? "—", tint: Ink.amber)
+                    stat(icon: "sunrise.fill", value: s.sunrise.map { Fmt.hm.string(from: $0) } ?? "—", tint: Ink.amberDeep)
                     stat(icon: "sunset.fill", value: s.sunset.map { Fmt.hm.string(from: $0) } ?? "—", tint: Ink.amberDeep)
                     if let tide = s.nextTide {
                         stat(icon: tide.isHigh ? "arrow.up.to.line" : "arrow.down.to.line",
@@ -128,7 +128,7 @@ struct MediumDayView: View {
                             .foregroundStyle(Ink.sea)
                         Text(title)
                             .font(Type.ui(11, weight: .semibold))
-                            .foregroundStyle(Ink.paper)
+                            .foregroundStyle(Ink.text)
                             .lineLimit(2)
                     }
                 }
@@ -141,7 +141,7 @@ struct MediumDayView: View {
                                 .foregroundStyle(Ink.moss)
                             Text(task)
                                 .font(Type.ui(10.5))
-                                .foregroundStyle(Ink.paper)
+                                .foregroundStyle(Ink.text)
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(2)
                         }
@@ -162,7 +162,7 @@ struct MediumDayView: View {
                     if abs(s.todayTotal) > 0.001 {
                         Text(NumberStyleFR.money(s.todayTotal, symbol: s.currencySymbol))
                             .font(Type.tape(10, weight: .bold))
-                            .foregroundStyle(Ink.amber)
+                            .foregroundStyle(Ink.amberDeep)
                     }
                 }
             }
@@ -173,7 +173,7 @@ struct MediumDayView: View {
     private func stat(icon: String, value: String, tint: Color) -> some View {
         HStack(spacing: 3) {
             Image(systemName: icon).font(.system(size: 9, weight: .bold)).foregroundStyle(tint)
-            Text(value).font(Type.tape(10)).foregroundStyle(Ink.paper)
+            Text(value).font(Type.tape(10)).foregroundStyle(Ink.text)
         }
     }
 }
@@ -207,10 +207,10 @@ struct LargeDayView: View {
                                     .font(Type.tape(8))
                                     .foregroundStyle(Ink.textFaint)
                             }
-                            .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amber)
+                            .foregroundStyle(mark.isHigh ? Ink.sea : Ink.amberDeep)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 7).fill(Color.black.opacity(0.22)))
+                            .background(RoundedRectangle(cornerRadius: 7).fill(Ink.sunken))
                         }
                     }
                 }
@@ -239,12 +239,12 @@ struct LargeDayView: View {
                         .foregroundStyle(Ink.textFaint)
                     Text(note)
                         .font(Type.tape(11))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                         .lineLimit(3)
                 }
                 .padding(9)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Ink.paper.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Ink.sunken))
             }
 
             Spacer(minLength: 0)
@@ -336,10 +336,10 @@ struct TideWidgetView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(next.label)
                         .font(Type.ui(11, weight: .semibold))
-                        .foregroundStyle(next.isHigh ? Ink.sea : Ink.amber)
+                        .foregroundStyle(next.isHigh ? Ink.sea : Ink.amberDeep)
                     Text(Fmt.hm.string(from: next.date))
                         .font(Type.tape(22, weight: .bold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     Text(String(format: "%.2f m · %@", next.height, Fmt.relative(next.date, from: entry.date)))
                         .font(Type.ui(9.5))
                         .foregroundStyle(Ink.textFaint)

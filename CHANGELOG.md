@@ -3,6 +3,86 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
+## [1.0] — 2026-08-08
+
+Première version destinée à l'App Store, en **version 1.0, build 1**. Les
+numéros 1.1 à 1.4 ci-dessous étaient des étapes de développement : rien n'ayant
+jamais été publié, la numérotation repart de zéro. Leur contenu est intégralement
+présent dans cette version.
+
+### Ajouté
+
+- **Un anniversaire renvoie à sa fiche.** Dans l'agenda, la ligne d'un
+  anniversaire porte désormais un bouton « Voir la fiche », avec la pastille de
+  la personne et l'âge qu'elle atteint ce jour-là quand l'année de naissance est
+  connue. Il ouvre l'annuaire directement sur la fiche : recherche et filtre des
+  favoris sont levés au passage pour qu'elle ne reste pas cachée, la liste s'y
+  déplace toute seule et la carte s'annonce d'un liseré ambré le temps qu'on la
+  trouve des yeux. On y trouve tout ce que l'agenda ne redit pas — le numéro
+  pour appeler, l'adresse, le courriel. Le même renvoi figure dans l'éditeur du
+  rendez-vous.
+- **L'annuaire reprend les contacts du téléphone.** Un bouton ⤓ en haut de
+  l'annuaire ouvre la liste du carnet d'adresses : on **coche les fiches à
+  importer** — une par une, ou toutes d'un coup — on choisit le groupe
+  d'arrivée, et c'est fait. Rien n'est repris à l'aveugle : les fiches déjà
+  présentes portent la mention « Déjà là » et ne peuvent pas se dupliquer,
+  le rapprochement se faisant sur le numéro (« 06 12 34 56 78 » et
+  « +33 6 12 34 56 78 » sont la même personne), à défaut sur le courriel, à
+  défaut sur le nom. C'est une recopie une fois pour toutes, pas une
+  synchronisation : les contacts du téléphone ne sont jamais modifiés, et une
+  fiche importée se corrige ensuite librement. Les dates de naissance suivent
+  et s'inscrivent à l'agenda comme les autres ; quand le carnet ne donne que le
+  jour et le mois, l'anniversaire revient tous les ans mais l'âge reste tu
+  jusqu'à ce qu'on renseigne l'année.
+
+### Modifié
+
+- **Toute l'interface passe au clair.** Le châssis sombre est remplacé par un
+  ivoire mat ; les cartes sont d'un blanc chaud légèrement soulevé, le texte est
+  en encre noire. La métaphore reste celle d'une machine à écrire, mais dans sa
+  version ivoire plutôt que noire — un carnet posé sur une table, qui se lit
+  aussi bien en plein soleil que le soir. Les feuilles (réglages, éditeurs,
+  archives) reprennent le même fond au lieu du gris d'iOS. La lune garde son
+  propre rond de ciel nocturne : c'est la seule note sombre, et c'est bien ce
+  qu'on vient y chercher.
+- **La typographie grossit franchement.** Le grossissement de base passe de 1,18
+  à 1,24, et les petits corps sont remontés davantage que les grands : les
+  mentions à 9 ou 10 points — libellés de colonnes, unités, heures de marée —
+  étaient les seules vraiment illisibles, et un agrandissement uniforme les
+  aurait laissées derrière. Les pictogrammes, les boutons ronds, les touches de
+  la calculatrice et la place réservée à la barre d'onglets suivent désormais la
+  même échelle : rien ne rétrécit pendant que le texte grandit.
+- **Les couleurs tiennent le contraste.** Sur fond clair, l'ambre vif ne se lit
+  plus : les textes et les pictogrammes passent à un ambre profond, qui dépasse
+  les 4,5:1 demandés par l'accessibilité, tandis que l'ambre vif reste réservé
+  aux aplats. L'onglet ouvert est signalé par sa pastille autant que par sa
+  couleur.
+
+## [1.4] — 2026-08-07
+
+### Ajouté
+
+- **Les anniversaires s'inscrivent à l'agenda.** Dès qu'une fiche de l'annuaire
+  porte une date de naissance, l'agenda reçoit un rendez-vous toute la journée,
+  répété tous les ans, rappelé la veille, rattaché à la personne concernée.
+  L'intitulé et la date suivent la fiche : renommer quelqu'un ou corriger sa
+  date met le rendez-vous à jour, effacer la date le retire, supprimer la fiche
+  aussi. Les rappels, la couleur et les notes ajoutés depuis l'agenda sont
+  préservés. Les fiches déjà remplies sont reportées une fois, au lancement.
+
+### Corrigé
+
+- **Aucune notification n'arrivait jamais.** L'application ne demandait
+  l'autorisation nulle part, sauf sous un bouton de l'écran des réglages qu'il
+  fallait avoir l'idée d'aller chercher. Tant que la question n'est pas posée,
+  iOS refuse tout en silence et n'affiche même pas Blocgenda dans
+  *Réglages ▸ Notifications* : ni rappel de rendez-vous, ni point du matin, ni
+  bilan du soir, alors que les deux derniers sont actifs d'origine. La demande
+  est désormais faite au premier lancement.
+- **Autorisation refusée : le bouton ne servait à rien.** iOS ne repose jamais
+  la question ; l'écran des réglages le dit maintenant, et ouvre directement
+  les Réglages d'iOS. L'état est relu au retour.
+
 ## [1.3] — 2026-08-07
 
 ### Ajouté

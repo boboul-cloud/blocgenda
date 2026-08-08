@@ -20,6 +20,22 @@ enum Notifications {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
+    /// Demande l'autorisation la première fois, et renvoie l'état obtenu.
+    ///
+    /// Tant que personne ne l'appelle, iOS ne pose jamais la question : rien ne
+    /// s'affiche, l'application n'apparaît pas dans Réglages ▸ Notifications, et
+    /// tous les rappels programmés ensuite sont refusés en silence — le point du
+    /// matin et le bilan du soir compris, alors qu'ils sont actifs d'origine.
+    /// Une fois la question posée, on ne la repose pas : iOS l'ignorerait, et le
+    /// seul chemin est le réglage système.
+    @discardableResult
+    static func ensureAuthorization() async -> UNAuthorizationStatus {
+        let status = await authorizationStatus()
+        guard status == .notDetermined else { return status }
+        await requestAuthorization()
+        return await authorizationStatus()
+    }
+
     /// Reconstruit toute la programmation. Appelé après chaque modification.
     static func reschedule(events: [AgendaEvent], settings: AppSettings) async {
         let center = UNUserNotificationCenter.current()

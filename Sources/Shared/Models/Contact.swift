@@ -1,7 +1,8 @@
 import Foundation
 
-/// Fiche de l'annuaire. Volontairement autonome (pas de dépendance au carnet
-/// d'adresses système) pour que l'annuaire reste un module du bloc-notes.
+/// Fiche de l'annuaire. Volontairement autonome : on peut recopier une fois
+/// pour toutes des fiches du carnet d'adresses du téléphone, mais rien n'est
+/// tenu synchronisé — l'annuaire reste un module du bloc-notes.
 struct Contact: Identifiable, Codable, Hashable, Sendable {
     var id: UUID = UUID()
     var firstName: String = ""
@@ -31,9 +32,31 @@ struct Contact: Identifiable, Codable, Hashable, Sendable {
             options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
     }
 
+    /// Année conventionnelle des dates de naissance dont on ignore l'année : le
+    /// carnet d'adresses du téléphone en donne beaucoup (jour et mois seuls).
+    /// L'anniversaire revient bien tous les ans, mais l'âge reste inconnu.
+    static let unknownBirthYear = 1604
+
+    var knowsBirthYear: Bool {
+        guard let birthday else { return false }
+        return Calendar.current.component(.year, from: birthday) != Self.unknownBirthYear
+    }
+
+    /// Clé de rapprochement, pour écarter les doublons à l'import : deux fiches
+    /// qui partagent un numéro — à défaut un courriel, à défaut un nom —
+    /// désignent la même personne. On ne garde que la fin du numéro, pour que
+    /// « 06 12 34 56 78 » et « +33 6 12 34 56 78 » se reconnaissent.
+    var matchKey: String {
+        let digits = phone.filter(\.isNumber)
+        if digits.count >= 6 { return "tel:\(String(digits.suffix(9)))" }
+        let mail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if !mail.isEmpty { return "mel:\(mail)" }
+        return "nom:\(fullName.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current))"
+    }
+
     /// Âge atteint le jour de l'anniversaire de l'année en cours.
     func age(on day: Date = Date()) -> Int? {
-        guard let birthday else { return nil }
+        guard let birthday, knowsBirthYear else { return nil }
         let cal = Calendar.current
         guard let years = cal.dateComponents([.year], from: birthday, to: day).year else { return nil }
         return max(0, years)

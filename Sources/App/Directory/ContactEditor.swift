@@ -17,6 +17,12 @@ struct ContactEditor: View {
         existing = !contact.firstName.isEmpty || !contact.lastName.isEmpty || !contact.company.isEmpty
     }
 
+    /// Les fiches reprises du carnet du téléphone n'ont souvent que le jour et
+    /// le mois : la date porte alors l'année conventionnelle.
+    private var knowsBirthYear: Bool {
+        Calendar.current.component(.year, from: birthday) != Contact.unknownBirthYear
+    }
+
     private var suggestedGroups: [String] {
         var names = Set(store.contacts.map(\.group))
         names.formUnion(["Général", "Famille", "Travail", "Santé", "Mer", "Maison", "Urgences"])
@@ -57,7 +63,7 @@ struct ContactEditor: View {
                             Circle()
                                 .fill(Ink.label(i))
                                 .frame(width: 24, height: 24)
-                                .overlay(Circle().strokeBorder(Ink.paper,
+                                .overlay(Circle().strokeBorder(Ink.text,
                                                                lineWidth: draft.colorIndex == i ? 2 : 0))
                                 .onTapGesture { draft.colorIndex = i }
                         }
@@ -70,7 +76,11 @@ struct ContactEditor: View {
                         DatePicker("Date", selection: $birthday, displayedComponents: [.date])
                     }
                 } footer: {
-                    Text("Les anniversaires apparaissent chaque jour dans l’éphéméride.")
+                    if hasBirthday && !knowsBirthYear {
+                        Text("Année de naissance inconnue : l’anniversaire revient tous les ans, mais l’âge n’est pas affiché tant que l’année n’est pas corrigée.")
+                    } else {
+                        Text("Les anniversaires apparaissent dans l’éphéméride, et s’inscrivent à l’agenda : toute la journée, tous les ans, rappelés la veille.")
+                    }
                 }
 
                 Section("Note") {
@@ -106,6 +116,6 @@ struct ContactEditor: View {
                 Button("Annuler", role: .cancel) {}
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 }

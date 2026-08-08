@@ -4,9 +4,15 @@ import SwiftUI
 /// gestes utiles (appeler, écrire, situer) à portée de pouce.
 struct DirectoryView: View {
     @Environment(Store.self) private var store
+    @Environment(Navigator.self) private var nav
     @State private var query = ""
     @State private var editing: Contact?
     @State private var showFavoritesOnly = false
+    @State private var importing = false
+    /// Accusé de réception de l'import, effacé au bout de quelques secondes.
+    @State private var importReport: String?
+    /// Fiche montrée du doigt en arrivant d'un autre écran, le temps de l'œil.
+    @State private var highlighted: UUID?
 
     private var filtered: [Contact] {
         let needle = query.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
@@ -36,18 +42,27 @@ struct DirectoryView: View {
                         withAnimation(.snappy) { showFavoritesOnly.toggle() }
                     } label: {
                         Image(systemName: showFavoritesOnly ? "star.fill" : "star")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(showFavoritesOnly ? Ink.amber : Ink.textFaint)
-                            .frame(width: 34, height: 34)
+                            .font(Type.icon(14, weight: .semibold))
+                            .foregroundStyle(showFavoritesOnly ? Ink.amberDeep : Ink.textFaint)
+                            .frame(width: Type.control(34), height: Type.control(34))
                             .background(Circle().fill(Ink.chassisSoft))
                     }
+                    Button { importing = true } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(Type.icon(14, weight: .semibold))
+                            .foregroundStyle(Ink.textFaint)
+                            .frame(width: Type.control(34), height: Type.control(34))
+                            .background(Circle().fill(Ink.chassisSoft))
+                    }
+                    .accessibilityLabel("Importer des contacts")
                     Button { editing = Contact() } label: {
                         Image(systemName: "person.badge.plus")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(.black.opacity(0.85))
-                            .frame(width: 34, height: 34)
+                            .font(Type.icon(14, weight: .bold))
+                            .foregroundStyle(Ink.onAccent)
+                            .frame(width: Type.control(34), height: Type.control(34))
                             .background(Circle().fill(Ink.amber))
                     }
+                    .accessibilityLabel("Nouvelle fiche")
                 }
                 .buttonStyle(.plain)
             }
@@ -56,47 +71,114 @@ struct DirectoryView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14, pinnedViews: [.sectionHeaders]) {
-                    if filtered.isEmpty {
-                        EmptyDirectory(searching: !query.isEmpty)
-                    }
-                    ForEach(groups, id: \.name) { group in
-                        Section {
-                            VStack(spacing: 8) {
-                                ForEach(group.contacts) { contact in
-                                    ContactCard(contact: contact) { editing = contact }
-                                }
-                            }
-                        } header: {
-                            HStack {
-                                Text(group.name.uppercased())
-                                    .font(Type.micro).tracking(1.5)
-                                    .foregroundStyle(Ink.textFaint)
-                                Spacer()
-                                Text("\(group.contacts.count)")
-                                    .font(Type.ui(10, weight: .semibold))
-                                    .foregroundStyle(Ink.textFaint)
-                            }
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 4)
-                            .background(Ink.chassis)
+            if let importReport {
+                Text(importReport)
+                    .font(Type.ui(12, weight: .medium))
+                    .foregroundStyle(Ink.textSoft)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+                    .transition(.opacity)
+            }
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: [.sectionHeaders]) {
+                        if filtered.isEmpty {
+                            EmptyDirectory(searching: !query.isEmpty) { importing = true }
                         }
+                        ForEach(groups, id: \.name) { group in
+                            Section {
+                                VStack(spacing: 8) {
+                                    ForEach(group.contacts) { contact in
+                                        ContactCard(contact: contact,
+                                                    isHighlighted: highlighted == contact.id) {
+                                            editing = contact
+                                        }
+                                        .id(contact.id)
+                                    }
+                                }
+                            } header: {
+                                HStack {
+                                    Text(group.name.uppercased())
+                                        .font(Type.micro).tracking(1.5)
+                                        .foregroundStyle(Ink.textFaint)
+                                    Spacer()
+                                    Text("\(group.contacts.count)")
+                                        .font(Type.ui(10, weight: .semibold))
+                                        .foregroundStyle(Ink.textFaint)
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 4)
+                                .background(Ink.chassis)
+                            }
+                        }
+                        Color.clear.frame(height: Type.tabBarInset + 12)
                     }
-                    Color.clear.frame(height: 70)
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
+                .task(id: nav.contactToReveal) { await reveal(with: proxy) }
             }
         }
         .background(Ink.chassis)
         .sheet(item: $editing) { contact in
             ContactEditor(contact: contact).environment(store)
         }
+        .sheet(isPresented: $importing) {
+            ContactImportSheet { added in report(added) }
+                .environment(store)
+        }
+    }
+
+    /// Amène à l'écran la fiche demandée par un autre onglet — l'anniversaire
+    /// que l'agenda vient de montrer, par exemple. Une recherche en cours ou le
+    /// filtre des favoris la cacheraient : on les lève d'abord.
+    private func reveal(with proxy: ScrollViewProxy) async {
+        guard let id = nav.contactToReveal else { return }
+        guard store.contacts.contains(where: { $0.id == id }) else {
+            nav.contactToReveal = nil
+            return
+        }
+        if !query.isEmpty { query = "" }
+        if showFavoritesOnly { showFavoritesOnly = false }
+        // Le temps que la liste se remette en place avant de viser.
+        try? await Task.sleep(for: .milliseconds(120))
+        guard !Task.isCancelled else { return }
+        withAnimation(.snappy) {
+            proxy.scrollTo(id, anchor: .center)
+            highlighted = id
+        }
+        // L'extinction ne dépend plus de cette tâche-ci : la remise à zéro de
+        // la demande, juste après, l'interromprait.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.5))
+            guard highlighted == id else { return }
+            withAnimation(.easeOut(duration: 0.4)) { highlighted = nil }
+        }
+        nav.contactToReveal = nil
+    }
+
+    /// Dit ce qui vient d'entrer dans l'annuaire, puis s'efface.
+    private func report(_ added: Int) {
+        let message: String
+        switch added {
+        case 0: message = "Aucune fiche ajoutée : elles étaient déjà là."
+        case 1: message = "1 fiche importée."
+        default: message = "\(added) fiches importées."
+        }
+        withAnimation(.snappy) { importReport = message }
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            withAnimation(.snappy) { importReport = nil }
+        }
     }
 }
 
 struct ContactCard: View {
     let contact: Contact
+    /// Fiche que l'on vient d'atteindre depuis un autre écran : elle s'annonce
+    /// par un liseré, le temps qu'on la trouve des yeux.
+    var isHighlighted: Bool = false
     var onTap: () -> Void
     @Environment(Store.self) private var store
 
@@ -126,11 +208,11 @@ struct ContactCard: View {
                     HStack(spacing: 5) {
                         Text(contact.fullName)
                             .font(Type.ui(14, weight: .semibold))
-                            .foregroundStyle(Ink.paper)
+                            .foregroundStyle(Ink.text)
                         if contact.isFavorite {
                             Image(systemName: "star.fill")
-                                .font(.system(size: 9))
-                                .foregroundStyle(Ink.amber)
+                                .font(Type.icon(9))
+                                .foregroundStyle(Ink.amberDeep)
                         }
                     }
                     if !contact.company.isEmpty {
@@ -154,15 +236,15 @@ struct ContactCard: View {
                 actionButton("phone.fill", url: telURL, color: Ink.moss)
                 actionButton("message.fill", url: smsURL, color: Ink.sea)
                 actionButton("envelope.fill", url: mailURL, color: Ink.violet)
-                actionButton("map.fill", url: mapURL, color: Ink.amber)
+                actionButton("map.fill", url: mapURL, color: Ink.amberDeep)
                 Spacer(minLength: 0)
                 Button(action: onTap) {
                     Image(systemName: "pencil")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(Type.icon(12, weight: .semibold))
                         .foregroundStyle(Ink.textFaint)
-                        .frame(width: 32, height: 30)
+                        .frame(width: Type.control(32), height: Type.control(30))
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(Color.black.opacity(0.22)))
+                            .fill(Ink.sunken))
                 }
                 .buttonStyle(.plain)
             }
@@ -170,9 +252,10 @@ struct ContactCard: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Ink.chassisSoft)
+                .fill(isHighlighted ? Ink.amber.opacity(0.14) : Ink.chassisSoft)
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Ink.chassisLine, lineWidth: 1))
+                    .strokeBorder(isHighlighted ? Ink.amber : Ink.chassisLine,
+                                  lineWidth: isHighlighted ? 2 : 1))
         )
         .contextMenu {
             Button {
@@ -195,9 +278,9 @@ struct ContactCard: View {
         if let url {
             Link(destination: url) {
                 Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(Type.icon(12, weight: .semibold))
                     .foregroundStyle(color)
-                    .frame(width: 38, height: 30)
+                    .frame(width: Type.control(38), height: Type.control(30))
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .fill(color.opacity(0.14)))
             }
@@ -212,8 +295,8 @@ struct Avatar: View {
     var body: some View {
         Text(contact.initials)
             .font(Type.ui(size * 0.36, weight: .bold))
-            .foregroundStyle(.black.opacity(0.8))
-            .frame(width: size, height: size)
+            .foregroundStyle(Ink.onAccent)
+            .frame(width: Type.control(size), height: Type.control(size))
             .background(
                 Circle().fill(
                     LinearGradient(colors: [Ink.label(contact.colorIndex),
@@ -225,11 +308,12 @@ struct Avatar: View {
 
 struct EmptyDirectory: View {
     var searching: Bool
+    var onImport: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: searching ? "person.fill.questionmark" : "person.crop.rectangle.stack")
-                .font(.system(size: 26, weight: .light))
+                .font(Type.icon(26, weight: .light))
                 .foregroundStyle(Ink.textFaint)
             Text(searching ? "Aucune fiche trouvée." : "L’annuaire est vide.")
                 .font(Type.ui(14, weight: .medium))
@@ -239,6 +323,18 @@ struct EmptyDirectory: View {
                     .font(Type.ui(12))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Ink.textFaint)
+                if let onImport {
+                    Button(action: onImport) {
+                        Label("Choisir dans mes contacts", systemImage: "square.and.arrow.down")
+                            .font(Type.ui(13, weight: .semibold))
+                            .foregroundStyle(Ink.onAccent)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(Capsule().fill(Ink.amber))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 6)
+                }
             }
         }
         .frame(maxWidth: .infinity)

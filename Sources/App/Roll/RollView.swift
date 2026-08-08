@@ -28,7 +28,7 @@ struct RollView: View {
                        onTotal: { store.printSubtotal() })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            Color.clear.frame(height: 62) // place pour la barre d'onglets
+            Color.clear.frame(height: Type.tabBarInset) // place pour la barre d’onglets
         }
         .background(Ink.chassis)
         .animation(.snappy(duration: 0.25), value: showKeypad)
@@ -56,16 +56,16 @@ struct RollView: View {
                         if !showSearch { search = "" }
                     } label: {
                         Image(systemName: showSearch ? "xmark" : "magnifyingglass")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(Type.icon(15, weight: .semibold))
                             .foregroundStyle(Ink.textFaint)
-                            .frame(width: 34, height: 34)
+                            .frame(width: Type.control(34), height: Type.control(34))
                             .background(Circle().fill(Ink.chassisSoft))
                     }
                     Button { showTearConfirm = true } label: {
                         Image(systemName: "scissors")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(Type.icon(15, weight: .semibold))
                             .foregroundStyle(Ink.textFaint)
-                            .frame(width: 34, height: 34)
+                            .frame(width: Type.control(34), height: Type.control(34))
                             .background(Circle().fill(Ink.chassisSoft))
                     }
                 }
@@ -195,12 +195,12 @@ struct TotalDisplay: View {
         HStack(alignment: .lastTextBaseline) {
             Text("TOTAL EN COURS")
                 .font(Type.micro)
-                .tracking(1.6)
-                .foregroundStyle(Ink.textFaint)
+                .tracking(1.4)
+                .foregroundStyle(Ink.textSoft)
             Spacer()
             Text(NumberStyleFR.money(total, symbol: symbol))
                 .font(Type.tape(21, weight: .semibold))
-                .foregroundStyle(total < 0 ? Ink.rouge : Ink.amber)
+                .foregroundStyle(total < 0 ? Ink.rouge : Ink.amberDeep)
                 .contentTransition(.numericText())
                 .animation(.snappy, value: total)
         }
@@ -208,7 +208,7 @@ struct TotalDisplay: View {
         .padding(.vertical, 11)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.black.opacity(0.35))
+                .fill(Ink.sunken)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(Ink.chassisLine, lineWidth: 1)
@@ -216,10 +216,10 @@ struct TotalDisplay: View {
         )
         .overlay(alignment: .bottomTrailing) {
             Text("\(lineCount) ligne\(lineCount > 1 ? "s" : "")")
-                .font(Type.ui(9))
-                .foregroundStyle(Ink.textFaint.opacity(0.7))
+                .font(Type.ui(9, weight: .medium))
+                .foregroundStyle(Ink.textFaint)
                 .padding(.trailing, 14)
-                .offset(y: 9)
+                .offset(y: 10)
         }
     }
 }
@@ -314,7 +314,7 @@ struct EmptyRoll: View {
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: searching ? "text.magnifyingglass" : "pencil.line")
-                .font(.system(size: 26, weight: .light))
+                .font(Type.icon(26, weight: .light))
                 .foregroundStyle(Ink.textFaint)
             Text(searching ? "Rien de trouvé sur la bande." : "La bande est vierge.")
                 .font(Type.ui(14, weight: .medium))
@@ -354,11 +354,11 @@ struct SearchField: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 13, weight: .semibold))
+                .font(Type.icon(13, weight: .semibold))
                 .foregroundStyle(Ink.textFaint)
             TextField(prompt, text: $text)
                 .font(Type.ui(14))
-                .foregroundStyle(Ink.paper)
+                .foregroundStyle(Ink.text)
                 .autocorrectionDisabled()
         }
         .padding(.horizontal, 12)

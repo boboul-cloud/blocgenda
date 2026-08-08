@@ -53,7 +53,7 @@ enum Tab: String, CaseIterable, Identifiable {
 
 struct RootView: View {
     @Environment(Store.self) private var store
-    @State private var tab: Tab = .roll
+    @State private var nav = Navigator()
     @State private var showSettings = false
 
     var body: some View {
@@ -61,7 +61,7 @@ struct RootView: View {
             Ink.chassis.ignoresSafeArea()
 
             Group {
-                switch tab {
+                switch nav.tab {
                 case .roll: RollView()
                 case .day: TodayView()
                 case .agenda: AgendaView()
@@ -70,9 +70,10 @@ struct RootView: View {
             }
             .transition(.opacity)
 
-            TabBar(selection: $tab, onSettings: { showSettings = true })
+            TabBar(selection: $nav.tab, onSettings: { showSettings = true })
         }
-        .animation(.snappy(duration: 0.22), value: tab)
+        .environment(nav)
+        .animation(.snappy(duration: 0.22), value: nav.tab)
         .onOpenURL { url in
             // blocgenda://jour — ouvert par les widgets et par Raccourcis.
             guard url.scheme == "blocgenda" else { return }
@@ -80,7 +81,7 @@ struct RootView: View {
             if target == "reglages" {
                 showSettings = true
             } else if let destination = Tab(deepLink: target) {
-                tab = destination
+                nav.tab = destination
             }
         }
         .sheet(isPresented: $showSettings) {
@@ -90,7 +91,9 @@ struct RootView: View {
     }
 }
 
-/// Barre d'onglets flottante : un bandeau sombre posé sur le châssis.
+/// Barre d'onglets flottante : un bandeau d'ivoire posé sur le châssis.
+/// L'onglet ouvert est signalé deux fois — par la couleur *et* par la pastille
+/// qui le porte : la couleur seule ne suffit pas à qui la distingue mal.
 struct TabBar: View {
     @Binding var selection: Tab
     var onSettings: () -> Void
@@ -104,14 +107,20 @@ struct TabBar: View {
                 } label: {
                     VStack(spacing: 3) {
                         Image(systemName: selection == tab ? tab.iconFilled : tab.icon)
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(Type.icon(17, weight: .semibold))
                             .symbolRenderingMode(.hierarchical)
                         Text(tab.title)
-                            .font(Type.ui(9.5, weight: .semibold))
+                            .font(Type.ui(8.5, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
-                    .foregroundStyle(selection == tab ? Ink.amber : Ink.textFaint)
+                    .foregroundStyle(selection == tab ? Ink.amberDeep : Ink.textSoft)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(selection == tab ? Ink.amber.opacity(0.16) : .clear)
+                    )
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -126,21 +135,22 @@ struct TabBar: View {
 
             Button(action: onSettings) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Ink.textFaint)
-                    .frame(width: 40, height: 40)
+                    .font(Type.icon(16, weight: .semibold))
+                    .foregroundStyle(Ink.textSoft)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Réglages")
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 6)
         .background(
             Capsule()
                 .fill(Ink.chassisSoft)
                 .overlay(Capsule().strokeBorder(Ink.chassisLine, lineWidth: 1))
-                .shadow(color: .black.opacity(0.45), radius: 18, y: 8)
+                .shadow(color: Ink.text.opacity(0.14), radius: 16, y: 6)
         )
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 12)
         .padding(.bottom, 4)
     }
 }
@@ -156,11 +166,15 @@ struct ScreenHeader<Accessory: View>: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Type.display)
-                    .foregroundStyle(Ink.paper)
+                    .foregroundStyle(Ink.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 if let subtitle {
                     Text(subtitle)
-                        .font(Type.ui(13))
-                        .foregroundStyle(Ink.textFaint)
+                        .font(Type.ui(13, weight: .medium))
+                        .foregroundStyle(Ink.textSoft)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             }
             Spacer(minLength: 8)

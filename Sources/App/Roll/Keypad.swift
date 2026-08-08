@@ -50,7 +50,7 @@ struct Keypad: View {
             Group {
                 if let symbol = symbolName(key) {
                     Image(systemName: symbol)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(Type.icon(17, weight: .semibold))
                 } else {
                     Text(title(key))
                         .font(Type.tape(19, weight: .medium))
@@ -58,7 +58,7 @@ struct Keypad: View {
             }
             .foregroundStyle(foreground(key))
             .frame(maxWidth: .infinity)
-            .frame(height: 46)
+            .frame(height: Type.control(46))
             .frame(width: wide ? nil : nil)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -91,10 +91,10 @@ struct Keypad: View {
 
     private func foreground(_ key: Key) -> Color {
         switch key {
-        case .digit: return Ink.paper
-        case .op, .percent: return Ink.amber
+        case .digit: return Ink.text
+        case .op, .percent: return Ink.amberDeep
         case .clear: return Ink.rouge
-        case .equal: return .black.opacity(0.85)
+        case .equal: return Ink.onAccent
         case .total, .vat: return Ink.sea
         case .back: return Ink.textSoft
         }
@@ -104,7 +104,7 @@ struct Keypad: View {
         switch key {
         case .equal: return Ink.amber
         case .digit: return Ink.chassisSoft
-        default: return Color.black.opacity(0.25)
+        default: return Ink.sunken
         }
     }
 

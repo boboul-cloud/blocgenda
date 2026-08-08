@@ -19,7 +19,7 @@ struct TodayView: View {
                     Button { showPlacePicker = true } label: {
                         HStack(spacing: 5) {
                             Image(systemName: place.isAutomatic ? "location.fill" : "mappin")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(Type.icon(10, weight: .bold))
                             Text(place.name)
                                 .font(Type.ui(12, weight: .semibold))
                                 .lineLimit(1)
@@ -60,7 +60,7 @@ struct TodayView: View {
                             rating: Solunar.dayRating(for: now),
                             now: now)
 
-                Color.clear.frame(height: 70)
+                Color.clear.frame(height: Type.tabBarInset + 12)
             }
             .padding(.horizontal, 20)
         }
@@ -124,7 +124,7 @@ struct PlacePicker: View {
                                 Text(port.name)
                                 Spacer()
                                 if store.settings.place.name == port.name {
-                                    Image(systemName: "checkmark").foregroundStyle(Ink.amber)
+                                    Image(systemName: "checkmark").foregroundStyle(Ink.amberDeep)
                                 }
                             }
                         }
@@ -160,7 +160,7 @@ struct PlacePicker: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Fermer") { dismiss() } }
             }
         }
-        .preferredColorScheme(.dark)
+        .paperSheet()
     }
 
     private func select(_ place: Place) {

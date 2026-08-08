@@ -11,12 +11,12 @@ struct EphemerisCard: View {
     }
 
     var body: some View {
-        ChassisCard(title: "Éphéméride", systemImage: "book.closed.fill", accent: Ink.amber) {
+        ChassisCard(title: "Éphéméride", systemImage: "book.closed.fill", accent: Ink.amberDeep) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(ephemeris.saint)
                         .font(Type.ui(18, weight: .bold))
-                        .foregroundStyle(Ink.paper)
+                        .foregroundStyle(Ink.text)
                     if let holiday = ephemeris.holidayName {
                         Pill(text: holiday, color: Ink.rouge, filled: true)
                     }
@@ -40,7 +40,7 @@ struct EphemerisCard: View {
                 if !ephemeris.dicton.isEmpty {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "quote.opening")
-                            .font(.system(size: 10))
+                            .font(Type.icon(10))
                             .foregroundStyle(Ink.amberDeep)
                         Text(ephemeris.dicton)
                             .font(Type.ui(12.5))
@@ -102,7 +102,7 @@ struct BirthdayCard: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(contact.fullName)
                                 .font(Type.ui(13, weight: .semibold))
-                                .foregroundStyle(Ink.paper)
+                                .foregroundStyle(Ink.text)
                             if let age = contact.age() {
                                 Text("\(age) ans aujourd’hui")
                                     .font(Type.ui(11))
@@ -113,9 +113,9 @@ struct BirthdayCard: View {
                         if !contact.phone.isEmpty, let url = URL(string: "tel://\(contact.phone.filter { $0.isNumber || $0 == "+" })") {
                             Link(destination: url) {
                                 Image(systemName: "phone.fill")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(Type.icon(12, weight: .semibold))
                                     .foregroundStyle(Ink.moss)
-                                    .frame(width: 30, height: 30)
+                                    .frame(width: Type.control(30), height: Type.control(30))
                                     .background(Circle().fill(Ink.moss.opacity(0.15)))
                             }
                         }
