@@ -1,4 +1,5 @@
 import Contacts
+import ContactsUI
 import SwiftUI
 
 /// Reprise du carnet d'adresses du téléphone. On recopie, une fois pour toutes,
@@ -113,10 +114,23 @@ struct ContactImportSheet: View {
     @State private var query = ""
     @State private var group = "Général"
     @State private var limited = false
+    /// Refus venu d'une restriction du téléphone (Temps d'écran) plutôt que
+    /// d'un choix : la marche à suivre n'est pas la même.
+    @State private var restricted = false
+    /// Feuille du système qui élargit la liste des fiches autorisées, quand
+    /// l'accès au carnet est limité.
+    @State private var widening = false
 
     /// Les fiches déjà présentes dans l'annuaire, reconnues au numéro.
     private var alreadyHere: Set<String> {
         Set(store.contacts.map(\.matchKey))
+    }
+
+    /// Tout ce qui reste à reprendre, la recherche mise à part. C'est ce qui
+    /// décide s'il y a encore quelque chose à faire dans cette feuille.
+    private var newcomers: [Contact] {
+        let here = alreadyHere
+        return candidates.filter { !here.contains($0.matchKey) }
     }
 
     private var filtered: [Contact] {
@@ -149,6 +163,7 @@ struct ContactImportSheet: View {
                 case .loading: loadingView
                 case .denied: deniedView
                 case .ready where candidates.isEmpty: emptyView
+                case .ready where newcomers.isEmpty: allHereView
                 case .ready: pickerView
                 }
             }
@@ -159,7 +174,7 @@ struct ContactImportSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Annuler") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    if phase == .ready && !candidates.isEmpty {
+                    if phase == .ready && !newcomers.isEmpty {
                         Button("Importer\(selection.isEmpty ? "" : " (\(selection.count))")") {
                             performImport()
                         }
@@ -167,6 +182,9 @@ struct ContactImportSheet: View {
                         .disabled(selection.isEmpty)
                     }
                 }
+            }
+            .contactAccessPicker(isPresented: $widening) { _ in
+                Task { await refresh() }
             }
         }
         .paperSheet()
@@ -192,13 +210,22 @@ struct ContactImportSheet: View {
             Text("Blocgenda n’a pas accès aux contacts.")
                 .font(Type.ui(15, weight: .medium))
                 .foregroundStyle(Ink.text)
-            Text("L’autorisation se donne dans les réglages du téléphone,\nà la rubrique Contacts.")
-                .font(Type.ui(12))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(Ink.textFaint)
+            if restricted {
+                // Le bouton des Réglages n'y peut rien : c'est Temps d'écran
+                // qui ferme l'accès, et il faut le code parental pour l'ouvrir.
+                Text("L’accès aux contacts est bloqué par une restriction\ndu téléphone. Elle se lève dans :")
+                    .font(Type.ui(12))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Ink.textFaint)
+                settingsPath("Réglages › Temps d’écran › Restrictions de contenu\net de confidentialité › Contacts")
+            } else {
+                Text("L’autorisation se donne dans :")
+                    .font(Type.ui(12))
+                    .foregroundStyle(Ink.textFaint)
+                settingsPath("Réglages › Blocgenda › Contacts\n› Accès complet")
+            }
             Button("Ouvrir les Réglages") {
-                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                UIApplication.shared.open(url)
+                openSettings()
             }
             .font(Type.ui(14, weight: .semibold))
             .foregroundStyle(Ink.amberDeep)
@@ -207,16 +234,108 @@ struct ContactImportSheet: View {
         .padding(30)
     }
 
+    /// Le chemin à suivre dans les Réglages, écrit noir sur blanc. Le bouton
+    /// « Ouvrir les Réglages » dépose sur la page de l'app, pas sur la ligne
+    /// exacte : sans le chemin, on cherche encore.
+    private func settingsPath(_ path: String) -> some View {
+        Text(path)
+            .font(Type.tape(12))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Ink.text)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Ink.sunken)
+            )
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
     private var emptyView: some View {
         VStack(spacing: 8) {
             Image(systemName: "person.crop.circle.badge.questionmark")
                 .font(Type.icon(26, weight: .light))
                 .foregroundStyle(Ink.textFaint)
-            Text("Aucun contact à reprendre.")
+            Text(limited ? "Aucune fiche autorisée pour l’instant."
+                         : "Aucun contact à reprendre.")
                 .font(Type.ui(15, weight: .medium))
                 .foregroundStyle(Ink.textSoft)
+            if limited { limitedHint }
         }
         .padding(30)
+    }
+
+    /// Tout ce que Blocgenda voit du carnet est déjà recopié. En accès limité,
+    /// c'est le cas dès le deuxième passage : sans le bouton d'élargissement,
+    /// l'annuaire resterait bloqué sur les quelques fiches du premier choix.
+    private var allHereView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "checkmark.circle")
+                .font(Type.icon(26, weight: .light))
+                .foregroundStyle(Ink.moss)
+            Text(candidates.count > 1
+                 ? "Ces \(candidates.count) fiches sont déjà dans l’annuaire."
+                 : "Cette fiche est déjà dans l’annuaire.")
+                .font(Type.ui(15, weight: .medium))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.textSoft)
+            if limited {
+                limitedHint
+            } else {
+                Text("Rien de nouveau à reprendre dans le carnet\nd’adresses du téléphone.")
+                    .font(Type.ui(12))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Ink.textFaint)
+            }
+        }
+        .padding(30)
+    }
+
+    /// L'explication et les deux sorties de l'accès limité. Le sélecteur du
+    /// système ajoute des fiches une à une ; l'accès complet, lui, ne se donne
+    /// que dans les Réglages — et rien ne l'indiquait, si bien qu'on pouvait
+    /// croire l'import définitivement bridé.
+    private var limitedHint: some View {
+        VStack(spacing: 10) {
+            Text("Blocgenda ne voit que les fiches que vous lui avez\ndésignées une à une : c’est l’accès limité.")
+                .font(Type.ui(12))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.textFaint)
+            wideningButton
+            fullAccessHint
+        }
+        .padding(.top, 2)
+    }
+
+    /// L'autre sortie : l'accès complet, qui ne se donne que dans les Réglages.
+    private var fullAccessHint: some View {
+        VStack(spacing: 6) {
+            Text("Pour voir tout le carnet d’un coup, passez à l’accès\ncomplet dans :")
+                .font(Type.ui(12))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.textFaint)
+            settingsPath("Réglages › Blocgenda › Contacts\n› Accès complet")
+            Button("Ouvrir les Réglages") { openSettings() }
+                .font(Type.ui(13, weight: .semibold))
+                .foregroundStyle(Ink.amberDeep)
+        }
+        .padding(.top, 6)
+    }
+
+    private var wideningButton: some View {
+        Button { widening = true } label: {
+            Label("Choisir d’autres contacts…", systemImage: "person.crop.circle.badge.plus")
+                .font(Type.ui(13, weight: .semibold))
+                .foregroundStyle(Ink.onAccent)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(Capsule().fill(Ink.amber))
+        }
+        .buttonStyle(.plain)
     }
 
     private var pickerView: some View {
@@ -254,10 +373,31 @@ struct ContactImportSheet: View {
                 .buttonStyle(.plain)
 
                 if limited {
-                    Text("Accès limité : seules les fiches que vous avez autorisées apparaissent ici.")
-                        .font(Type.ui(11))
-                        .foregroundStyle(Ink.textFaint)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text("Accès limité : seules les fiches que vous avez autorisées apparaissent ici.")
+                            .font(Type.ui(11))
+                            .foregroundStyle(Ink.textFaint)
+                        Spacer(minLength: 0)
+                        Menu {
+                            Button {
+                                widening = true
+                            } label: {
+                                Label("Choisir d’autres contacts…",
+                                      systemImage: "person.crop.circle.badge.plus")
+                            }
+                            Button {
+                                openSettings()
+                            } label: {
+                                Label("Tout autoriser dans les Réglages…", systemImage: "gear")
+                            }
+                        } label: {
+                            Text("Élargir…")
+                                .font(Type.ui(12, weight: .semibold))
+                                .foregroundStyle(Ink.amberDeep)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.horizontal, 20)
@@ -266,6 +406,7 @@ struct ContactImportSheet: View {
             let here = alreadyHere
             ScrollView {
                 LazyVStack(spacing: 8) {
+                    if filtered.isEmpty { noMatchView }
                     ForEach(filtered) { contact in
                         let known = here.contains(contact.matchKey)
                         ImportRow(contact: contact,
@@ -286,6 +427,30 @@ struct ContactImportSheet: View {
         }
     }
 
+    /// La recherche ne trouve rien. En accès limité, c'est le cas le plus
+    /// fréquent — le carnet visible tient en quelques fiches — et une liste
+    /// vide sans un mot laisserait croire à une panne.
+    private var noMatchView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "person.fill.questionmark")
+                .font(Type.icon(24, weight: .light))
+                .foregroundStyle(Ink.textFaint)
+            Text("Aucune fiche ne porte ce nom.")
+                .font(Type.ui(14, weight: .medium))
+                .foregroundStyle(Ink.textSoft)
+            if limited {
+                Text("Blocgenda ne cherche que parmi les \(candidates.count) fiche\(candidates.count > 1 ? "s" : "") que\nvous lui avez désignées.")
+                    .font(Type.ui(12))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Ink.textFaint)
+                wideningButton.padding(.top, 4)
+                fullAccessHint
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 44)
+    }
+
     private var allSelected: Bool {
         !selectable.isEmpty && selectable.allSatisfy { selection.contains($0.id) }
     }
@@ -301,10 +466,20 @@ struct ContactImportSheet: View {
         case .limited:
             limited = true
         default:
+            restricted = current == .restricted
             phase = .denied
             return
         }
+        await refresh()
+    }
+
+    /// Relit le carnet : au premier affichage, puis après chaque élargissement
+    /// de l'accès limité. Les fiches candidates reçoivent une identité neuve à
+    /// chaque lecture, donc les cases cochées ne survivent pas — on les vide
+    /// plutôt que de les laisser désigner des fiches disparues.
+    private func refresh() async {
         candidates = await SystemContacts.fetch()
+        selection = selection.intersection(candidates.map(\.id))
         phase = .ready
     }
 
