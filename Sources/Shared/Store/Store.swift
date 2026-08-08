@@ -214,13 +214,35 @@ final class Store {
 
     // MARK: - Annuaire
 
+    /// Clé de rapprochement des tiroirs : deux noms qui ne diffèrent que par la
+    /// casse, les accents ou les espaces de bordure désignent le même tiroir.
+    /// C'est la règle appliquée à la création (`addContactGroup`) ; tout ce qui
+    /// range ou retrouve une fiche doit suivre la même, sans quoi une fiche se
+    /// classe dans un tiroir que le filtre ne sait plus atteindre.
+    nonisolated static func contactGroupKey(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+    }
+
     /// Tous les tiroirs de l'annuaire : ceux offerts d'office, ceux créés à la
     /// main, et ceux qu'une fiche occupe — une fiche reprise du téléphone peut
     /// porter un groupe qu'on n'a jamais déclaré.
+    ///
+    /// Un seul nom par tiroir, et toujours le même d'un lancement à l'autre :
+    /// la liste se construisait à partir d'un `Set`, dont l'ordre de parcours
+    /// change à chaque démarrage. Deux noms voisins — « Voisins » et
+    /// « voisins » — se retrouvaient alors tantôt dans un ordre, tantôt dans
+    /// l'autre, et le filtre offrait deux entrées jumelles dont une seule
+    /// contenait les fiches. C'est le premier nom rencontré qui fait foi :
+    /// les tiroirs d'office d'abord, puis ceux créés à la main.
     var contactGroups: [String] {
-        var names = Set(Contact.defaultGroups)
-        names.formUnion(settings.customContactGroups ?? [])
-        names.formUnion(contacts.map(\.group))
+        var seen = Set<String>()
+        var names: [String] = []
+        for name in Contact.defaultGroups + (settings.customContactGroups ?? []) + contacts.map(\.group) {
+            let key = Self.contactGroupKey(name)
+            guard !key.isEmpty, seen.insert(key).inserted else { continue }
+            names.append(name)
+        }
         return names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
@@ -231,10 +253,8 @@ final class Store {
     func addContactGroup(_ raw: String) -> String? {
         let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return nil }
-        let fold = { (s: String) in
-            s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-        }
-        if let existing = contactGroups.first(where: { fold($0) == fold(name) }) {
+        let key = Self.contactGroupKey(name)
+        if let existing = contactGroups.first(where: { Self.contactGroupKey($0) == key }) {
             return existing
         }
         settings.customContactGroups = (settings.customContactGroups ?? []) + [name]
@@ -244,15 +264,21 @@ final class Store {
 
     /// Un tiroir créé à la main se retire ; ceux d'office, non.
     func isCustomContactGroup(_ name: String) -> Bool {
-        (settings.customContactGroups ?? []).contains(name)
+        let key = Self.contactGroupKey(name)
+        guard !Contact.defaultGroups.contains(where: { Self.contactGroupKey($0) == key }) else {
+            return false
+        }
+        return (settings.customContactGroups ?? []).contains { Self.contactGroupKey($0) == key }
     }
 
     /// Retire un tiroir créé à la main. Les fiches qu'il contient encore
     /// retournent au groupe par défaut, sans quoi elles deviendraient
     /// introuvables au filtre.
     func removeContactGroup(_ name: String) {
-        settings.customContactGroups = (settings.customContactGroups ?? []).filter { $0 != name }
-        for i in contacts.indices where contacts[i].group == name {
+        let key = Self.contactGroupKey(name)
+        settings.customContactGroups = (settings.customContactGroups ?? [])
+            .filter { Self.contactGroupKey($0) != key }
+        for i in contacts.indices where Self.contactGroupKey(contacts[i].group) == key {
             contacts[i].group = "Général"
         }
         persistNow()

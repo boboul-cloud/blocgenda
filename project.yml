@@ -83,6 +83,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.oulhen.blocgenda.uitests
         TEST_TARGET_NAME: Blocgenda
+        # Sans Info.plist, la cible de test ne se signe pas et rien ne se
+        # construit : xcodebuild s'arrête avant même de lancer un test.
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: Blocgenda
 
