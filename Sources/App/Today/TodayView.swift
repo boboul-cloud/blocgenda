@@ -41,7 +41,8 @@ struct TodayView: View {
                          error: store.dayData.tideError,
                          loading: store.dayData.isLoading,
                          moon: store.dayData.moon,
-                         now: now)
+                         now: now,
+                         placeName: place.name)
 
                 MoonCard(illumination: store.dayData.moon,
                          times: store.dayData.moonTimes,
@@ -166,6 +167,13 @@ struct PlacePicker: View {
     private func select(_ place: Place) {
         store.settings.place = place
         store.settings.followLocation = place.isAutomatic
+        // Le port de marée épinglé l'a été comme « le plus proche » du lieu
+        // d'alors : il n'a plus de sens une fois qu'on a déménagé. Sans ce
+        // report, on changeait de lieu et les heures de marée ne bougeaient
+        // pas d'un pouce — sans que rien ne dise pourquoi.
+        if store.settings.tidePort != nil {
+            store.settings.tidePort = ReferencePorts.nearest(to: place)
+        }
         store.scheduleSave()
         Task { await store.refreshDay(force: true) }
         dismiss()

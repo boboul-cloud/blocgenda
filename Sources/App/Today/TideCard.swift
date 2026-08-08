@@ -8,6 +8,9 @@ struct TideCard: View {
     let loading: Bool
     let moon: Astro.MoonIllumination?
     let now: Date
+    /// Le lieu affiché en haut de l'écran, pour signaler quand la marée vient
+    /// d'ailleurs.
+    var placeName: String = ""
 
     private var todaySamples: [TideDay.TideSample] {
         guard let tide else { return [] }
@@ -39,7 +42,10 @@ struct TideCard: View {
 
     var body: some View {
         ChassisCard(title: "Marée", systemImage: "water.waves", accent: Ink.sea) {
-            if let error {
+            // Une panne de relevé n'efface plus la courbe : tant qu'on a des
+            // heures, on les montre, et l'échec se dit au-dessus. Il n'y a que
+            // sans rien à afficher qu'on s'en tient au message.
+            if let error, todaySamples.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(error)
                         .font(Type.ui(12))
@@ -58,17 +64,39 @@ struct TideCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 VStack(spacing: 12) {
+                    if let error {
+                        Label("\(error) Heures relevées à \(Fmt.hm.string(from: tide?.fetchedAt ?? now)).",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(Type.ui(10.5, weight: .medium))
+                            .foregroundStyle(Ink.amberDeep)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     headline
                     chart.frame(height: 110)
                     marksRow
                     footer
-                    Text("Hauteurs par rapport au niveau moyen de la mer (prévision Open-Meteo). Pour naviguer, référez-vous à l’annuaire officiel des marées.")
+                    Text(provenance)
                         .font(Type.ui(9.5))
                         .foregroundStyle(Ink.textFaint.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
+    }
+
+    /// D'où viennent ces heures, et ce qu'elles valent. Le modèle qui les
+    /// fournit avance d'une petite heure près des côtes : on le rattrape par un
+    /// décalage mesuré sur les annuaires officiels, mais il reste une marge de
+    /// quelques minutes — et là où aucune station ne couvre le lieu, rien n'est
+    /// rattrapé du tout. Le dire vaut mieux que laisser croire à l'exactitude.
+    private var provenance: String {
+        let base = "Hauteurs par rapport au niveau moyen de la mer (modèle Open-Meteo). "
+        guard let minutes = tide?.phaseCorrectionMinutes, let station = tide?.phaseCorrectionStation
+        else {
+            return base + "Heures non recalées pour ce lieu : elles peuvent avancer d’une demi-heure ou plus. Pour naviguer, référez-vous à l’annuaire officiel des marées."
+        }
+        return base + "Heures recalées de \(minutes) min sur l’annuaire officiel (référence \(station)) ; il subsiste quelques minutes d’écart. Pour naviguer, référez-vous à l’annuaire officiel des marées."
     }
 
     private var headline: some View {
@@ -175,7 +203,10 @@ struct TideCard: View {
     private var footer: some View {
         HStack(spacing: 8) {
             if let port = tide?.portName {
-                Pill(text: port, color: Ink.sea)
+                // Quand la marée n'est pas celle du lieu affiché — lieu sans
+                // couverture, port de marée choisi à la main — le dire, sinon
+                // on croit l'application figée sur de vieilles heures.
+                Pill(text: port == placeName ? port : "marée : \(port)", color: Ink.sea)
             }
             if let springNeapLabel {
                 Pill(text: springNeapLabel, color: Ink.violet)

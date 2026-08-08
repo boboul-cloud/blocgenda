@@ -3,6 +3,43 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Corrigé
+
+- **Changer de lieu ne changeait pas la marée.** Un port de marée épinglé — par
+  « Utiliser le port le plus proche » — continuait de servir quel que soit le
+  lieu choisi ensuite, alors qu'il avait justement été retenu comme le plus
+  proche du lieu d'alors. Il suit désormais le lieu, et la fiche annonce
+  « marée : Brest » dès que les heures ne sont pas celles du lieu affiché.
+- **Tirer la liste pour mettre à jour effaçait la marée.** Un relevé manqué
+  remplaçait des heures justes par « Marée indisponible ». La courbe déjà
+  affichée est maintenant conservée, l'échec se dit en un mot au-dessus avec
+  l'heure du dernier relevé, et un simple geste relâché ne compte plus pour une
+  panne. Au passage, toute erreur réseau était rangée sous « hors couverture
+  maritime », ce qui déclenchait un second appel voué à l'échec sur un port de
+  repli : la raison donnée par le service est désormais reprise telle quelle.
+
+- **Les heures de marée avançaient d'environ trois quarts d'heure.** Les
+  hauteurs viennent du modèle océanique global SMOC de Météo-France, dont la
+  maille de huit kilomètres ne résout pas le port : pour Brest, elle tombe à une
+  dizaine de kilomètres au large. Comparé aux annuaires officiels sur douze
+  marées par port, le modèle avançait de 29 à 55 minutes selon l'endroit. Chaque
+  lieu est désormais rattaché à la station calibrée la plus proche, comme un
+  annuaire rattache un port secondaire à un port de référence : l'écart moyen
+  tombe de 44 à 7 minutes. Là où aucune station ne couvre le lieu —
+  Méditerranée, outre-mer — rien n'est corrigé, et la fiche le dit.
+- **Le filtre par groupe de l'annuaire pouvait rester vide.** La liste des
+  tiroirs se construisait à partir d'un ensemble, dont l'ordre de parcours est
+  tiré au sort à chaque démarrage ; deux noms ne différant que par la casse ou
+  les accents donnaient deux entrées jumelles dont une seule contenait les
+  fiches, dans un ordre qui changeait d'un lancement à l'autre. Les tiroirs sont
+  désormais rapprochés par la même règle partout — création, classement, filtre,
+  compte et suppression — et leur ordre ne dépend plus du lancement.
+- **Un groupe accentué se rangeait derrière les Z.** Les sections de l'annuaire
+  se triaient sur l'ordre brut des points de code alors que le filtre triait
+  alphabétiquement : « École » se retrouvait en fin de liste.
+
 ## [1.0] — 2026-08-08
 
 Première version destinée à l'App Store, en **version 1.0, build 1**. Les
