@@ -361,7 +361,8 @@ struct ContactCard: View {
                     Image(systemName: "pencil")
                         .font(Type.icon(12, weight: .semibold))
                         .foregroundStyle(Ink.textFaint)
-                        .frame(width: Type.control(32), height: Type.control(30))
+                        .frame(maxWidth: Type.control(32))
+                        .frame(height: Type.control(30))
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
                             .fill(Ink.sunken))
                 }
@@ -369,6 +370,8 @@ struct ContactCard: View {
             }
         }
         .padding(12)
+        // La carte tient la colonne, quoi qu'il arrive à son contenu.
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(isHighlighted ? Ink.amber.opacity(0.14) : Ink.chassisSoft)
@@ -392,6 +395,10 @@ struct ContactCard: View {
         }
     }
 
+    /// Largeur souple, et non figée : une fiche complète aligne quatre gestes
+    /// plus le crayon, et à grande taille de texte la somme dépassait la
+    /// colonne — la carte s'élargissait alors pour suivre, et débordait à
+    /// droite par-dessus l'en-tête du groupe. Ils se resserrent maintenant.
     @ViewBuilder
     private func actionButton(_ symbol: String, url: URL?, color: Color) -> some View {
         if let url {
@@ -399,7 +406,8 @@ struct ContactCard: View {
                 Image(systemName: symbol)
                     .font(Type.icon(12, weight: .semibold))
                     .foregroundStyle(color)
-                    .frame(width: Type.control(38), height: Type.control(30))
+                    .frame(maxWidth: Type.control(38))
+                    .frame(height: Type.control(30))
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .fill(color.opacity(0.14)))
             }
