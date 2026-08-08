@@ -11,10 +11,14 @@ struct SmartBar: View {
     var placeholder: String = "Calcul, note, action, rendez-vous…"
     /// Le clavier de calculatrice n'a de sens que sur le rouleau.
     var showsKeypadToggle: Bool = true
+    /// Le micro autonome : il dicte dans la barre sans faire monter le clavier.
+    var showsDictation: Bool = true
     /// Jour de référence pour l'aperçu — celui que l'agenda a sélectionné.
     var reference: Date = Date()
     /// Étiquettes déjà employées, proposées dès qu'on écrit.
     var tagSuggestions: [String] = []
+
+    @State private var dictation = Dictation()
 
     private var preview: SmartInput.Parsed? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -30,6 +34,13 @@ struct SmartBar: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
 
+            if let message = dictation.message {
+                DictationNotice(message: message) { dictation.openSettings() }
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 6)
+                    .transition(.opacity)
+            }
+
             if let preview {
                 IntentPreview(parsed: preview)
                     .padding(.horizontal, 18)
@@ -40,6 +51,7 @@ struct SmartBar: View {
             HStack(spacing: 10) {
                 if showsKeypadToggle {
                     Button {
+                        dictation.stop()
                         withAnimation { showKeypad.toggle() }
                         if showKeypad { focused = false }
                     } label: {
@@ -71,7 +83,23 @@ struct SmartBar: View {
                     .onSubmit(onSubmit)
                     .accessibilityIdentifier("barre.saisie")
 
-                Button(action: onSubmit) {
+                if showsDictation && dictation.isAvailable {
+                    Button(action: dictate) {
+                        Image(systemName: dictation.isRecording ? "stop.fill" : "mic.fill")
+                            .font(Type.icon(15, weight: .bold))
+                            .symbolEffect(.pulse, isActive: dictation.isRecording)
+                            .foregroundStyle(dictation.isRecording ? Ink.paper : Ink.textFaint)
+                            .frame(width: Type.control(34), height: Type.control(34))
+                            .background(
+                                Circle().fill(dictation.isRecording ? Ink.rouge : Ink.chassis)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("barre.dictee")
+                    .accessibilityLabel(dictation.isRecording ? "Arrêter la dictée" : "Dicter")
+                }
+
+                Button(action: submit) {
                     Image(systemName: "arrow.down.doc.fill")
                         .font(Type.icon(16, weight: .bold))
                         .foregroundStyle(text.isEmpty ? Ink.textFaint : Ink.onAccent)
@@ -100,6 +128,27 @@ struct SmartBar: View {
         .background(Ink.chassis)
         .animation(.snappy(duration: 0.2), value: text.isEmpty)
         .animation(.snappy(duration: 0.2), value: focused)
+        .animation(.snappy(duration: 0.2), value: dictation.isRecording)
+        .onChange(of: focused) { _, isFocused in
+            // Le clavier et le micro ne parlent pas en même temps.
+            if isFocused { dictation.stop() }
+        }
+        .onDisappear { dictation.stop() }
+    }
+
+    /// Le micro écrit à la suite de ce qui est déjà écrit, sans jamais
+    /// l'effacer : on peut commencer au doigt et finir à la voix.
+    private func dictate() {
+        guard !dictation.isRecording else { dictation.stop(); return }
+        focused = false
+        if showKeypad { withAnimation { showKeypad = false } }
+        let base = text.isEmpty || text.hasSuffix(" ") ? text : text + " "
+        dictation.start { heard in text = base + heard }
+    }
+
+    private func submit() {
+        dictation.stop()
+        onSubmit()
     }
 
     /// Ajoute une étiquette en fin de ligne. Un nom vide insère juste le `#`,
@@ -159,6 +208,31 @@ struct TagSuggestions: View {
         }
         .buttonStyle(.plain)
         .frame(height: Type.control(28))
+    }
+}
+
+/// Le mot d'excuse du micro : autorisation refusée, matériel indisponible.
+struct DictationNotice: View {
+    let message: String
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: "mic.slash.fill")
+                    .font(Type.icon(10, weight: .bold))
+                Text(message)
+                    .font(Type.ui(11, weight: .medium))
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(Ink.rouge)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Ink.rouge.opacity(0.12)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("barre.dictee.avis")
     }
 }
 
