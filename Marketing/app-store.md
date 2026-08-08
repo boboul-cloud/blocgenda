@@ -121,6 +121,8 @@ Apple les indexe déjà.)*
 ## Nouveautés de cette version
 
 ```
+• Un bouton de dictée dans la barre de saisie : on parle, la ligne s'écrit, et
+  le clavier ne monte jamais.
 • On peut maintenant écrire directement depuis l'agenda : la barre unique y
   ajoute au jour que vous avez sélectionné.
 • Portsall, Le Conquet et l'Aber-Wrac'h rejoignent les ports de référence.
@@ -152,6 +154,10 @@ Justification, si Apple demande des précisions :
   comporte aucun identifiant et n'est ni conservé ni relié à l'utilisateur par
   l'éditeur. Il s'agit d'un traitement en temps réel au sens des lignes
   directrices d'Apple, non d'une collecte.
+- La dictée est traitée sur l'appareil chaque fois que le modèle français local
+  est disponible. À défaut, iOS transmet l'audio au service de reconnaissance
+  d'Apple, comme pour la touche micro du clavier ; l'éditeur n'y a pas accès et
+  n'en conserve rien.
 - Aucune donnée n'est utilisée pour du suivi publicitaire. Le drapeau
   *App Tracking Transparency* n'est pas requis.
 
@@ -160,27 +166,50 @@ Justification, si Apple demande des précisions :
 | Clé | Texte |
 |---|---|
 | `NSLocationWhenInUseUsageDescription` | Blocgenda utilise votre position pour calculer les marées, le lever et le coucher du soleil et la météo du lieu où vous vous trouvez. |
+| `NSContactsUsageDescription` | Blocgenda recopie dans son annuaire les fiches que vous choisissez d'importer. Vos contacts ne sont ni modifiés ni envoyés ailleurs. |
 | `NSPhotoLibraryAddUsageDescription` | Blocgenda enregistre les morceaux de rouleau que vous déchirez dans vos photos. |
+| `NSMicrophoneUsageDescription` | Blocgenda écoute le micro seulement quand vous touchez le bouton de dictée, le temps d'écrire votre ligne sur le rouleau. |
+| `NSSpeechRecognitionUsageDescription` | Blocgenda transcrit ce que vous dictez pour l'inscrire sur le rouleau. La reconnaissance se fait sur l'appareil dès que celui-ci en est capable. |
 
 **Chiffrement :** `ITSAppUsesNonExemptEncryption = false` (l'app n'utilise que
 HTTPS standard, exempté).
 
 ---
 
-## Captures d'écran à fournir
+## Captures d'écran
 
-Apple exige au minimum le format 6,9 pouces (1320 × 2868). Les captures du site
-(`docs/captures/`) ont été prises sur iPhone 17 et doivent être refaites au bon
-format avant dépôt.
+Prêtes dans `Marketing/Captures/`, aux quatre tailles acceptées par App Store
+Connect. Apple n'exige que le 6,9 pouces et le 13 pouces ; les deux autres sont
+fournies pour les emplacements facultatifs.
 
-Ordre suggéré, avec les légendes à incruster :
+| Dossier | Dimensions | Emplacement App Store Connect |
+|---|---|---|
+| `iphone-6.9/` | 1320 × 2868 | iPhone 6,9″ — **obligatoire** |
+| `iphone-6.5/` | 1242 × 2688 | iPhone 6,5″ |
+| `ipad-13/` | 2064 × 2752 | iPad 13″ — **obligatoire** |
+| `ipad-12.9/` | 2048 × 2732 | iPad 12,9″ |
 
-1. **Rouleau** — « Une seule bande. Tout s'y imprime. »
-2. **Le jour** — « Le soleil et la marée du lieu où vous êtes. »
-3. **Rouleau, barre active** — « Écrivez. Blocgenda comprend. »
-4. **Agenda** — « Vos rendez-vous, vos rappels. »
-5. **Annuaire** — « Vos numéros utiles à portée de pouce. »
-6. **Widgets** — « La journée d'un coup d'œil. »
+Cinq images, dans l'ordre de dépôt :
+
+1. **Rouleau** — la bande, deux journées, le total en cours
+2. **Barre active** — « demain 14h30 dentiste », et l'intention reconnue
+3. **Le jour** — soleil, marée de Brest, lune, éphéméride
+4. **Agenda** — la semaine, le rendez-vous, les notes et actions du jour
+5. **Annuaire** — les fiches, par tiroir
+
+Pour les refaire : `./Tools/captures.sh`. Le script peuple un simulateur d'une
+journée de démonstration, prend les images par un test d'interface, puis les met
+aux quatre formats. La marée et la météo viennent du réseau : sans connexion, la
+fiche du jour se prendrait en panne. L'heure de la barre d'état est celle de la
+prise, pour ne pas contredire ce que l'app affiche.
+
+Légendes à incruster, si l'on décide d'en mettre :
+
+1. « Une seule bande. Tout s'y imprime. »
+2. « Écrivez. Blocgenda comprend. »
+3. « Le soleil et la marée du lieu où vous êtes. »
+4. « Vos rendez-vous, vos rappels. »
+5. « Vos numéros utiles à portée de pouce. »
 
 ---
 
@@ -190,7 +219,8 @@ Ordre suggéré, avec les légendes à incruster :
       `group.com.oulhen.blocgenda` sur les **deux** cibles
 - [ ] Compléter les mentions légales (adresse, SIREN) si le compte est une
       organisation — voir `docs/mentions-legales.html`
-- [ ] Refaire les captures au format 6,9 pouces
+- [ ] Refaire les captures le jour du dépôt — `./Tools/captures.sh` : elles
+      portent la date et la marée du jour de la prise
 - [ ] Vérifier que les trois URL (marketing, assistance, confidentialité)
       répondent bien en HTTPS
 - [ ] Incrémenter `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` dans

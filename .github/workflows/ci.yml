@@ -70,6 +70,8 @@ jobs:
       - name: Générer le projet
         run: xcodegen generate
 
+      # CaptureTests est écarté : il ne vérifie rien, il photographie. Il lui
+      # faut le réseau pour la marée et un gabarit d'écran précis.
       - name: Piloter l'application
         run: |
           DEVICE=$(xcrun simctl list devices available --json \
@@ -81,7 +83,8 @@ jobs:
             -scheme Blocgenda \
             -destination "id=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO \
-            -only-testing:BlocgendaUITests
+            -only-testing:BlocgendaUITests \
+            -skip-testing:BlocgendaUITests/CaptureTests
 
   icone:
     name: Icône 1024 sans canal alpha
