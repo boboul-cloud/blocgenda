@@ -151,6 +151,36 @@ day.marks = [
 check("marnage du jour affiché",
       String(format: "%.2f", day.range(on: midnight) ?? 0), "3.45")
 
+// Recalage de phase. Le modèle qui fournit les hauteurs avance d'une petite
+// heure près des côtes ; chaque port est rattaché à la station calibrée la
+// plus proche. Mesures d'août 2026 — voir `TidePhase`.
+func rattachement(_ lat: Double, _ lon: Double) -> String {
+    guard let s = TidePhase.station(for: lat, longitude: lon) else { return "aucun" }
+    return "\(s.name)+\(s.minutes)"
+}
+check("Brest se cale sur lui-même", rattachement(48.3833, -4.4950), "Brest+52")
+// Portsall, Le Conquet et l'Aber-Wrac'h n'ont pas de mesure propre : ils
+// prennent celle de la station voisine, comme un port rattaché d'annuaire.
+check("Portsall se rattache à Brest", rattachement(48.5639, -4.7139), "Brest+52")
+check("Le Conquet se rattache à Brest", rattachement(48.3600, -4.7700), "Brest+52")
+check("Vannes se rattache à Lorient", rattachement(47.6350, -2.7600), "Lorient+36")
+check("Les Sables se rattachent à La Rochelle", rattachement(46.4960, -1.7830), "La Rochelle+51")
+// Hors de portée des stations mesurées, on ne corrige rien plutôt que de
+// transposer un décalage dont rien ne dit qu'il vaille là-bas.
+check("Marseille n'est pas recalée", rattachement(43.2965, 5.3698), "aucun")
+check("Papeete n'est pas recalée", rattachement(-17.5350, -149.5700), "aucun")
+check("Biarritz, trop loin, n'est pas recalée", rattachement(43.4830, -1.5586), "aucun")
+
+// Le décalage s'applique à la courbe comme aux étales : une hauteur lue à une
+// heure donnée doit rester cohérente avec les marées affichées à côté.
+let brute = series([1, 0, -1, -2, -1, 0, 1, 2, 1, 0])
+let recalee = brute.map { TideDay.TideSample(date: $0.date.addingTimeInterval(52 * 60),
+                                             height: $0.height) }
+check("les étales suivent le décalage",
+      String(Int(TideService.extrema(from: recalee)[0].date
+                 .timeIntervalSince(TideService.extrema(from: brute)[0].date) / 60)),
+      "52")
+
 print("\n── Astronomie (Brest, 7 août 2026) ──")
 let sun = Astro.sunTimes(date: ref, lat: 48.3833, lon: -4.4950)
 let hm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "fr_FR")

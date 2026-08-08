@@ -17,6 +17,13 @@ struct TideDay: Codable, Hashable, Sendable {
     var marks: [TideMark] = []
     var portName: String = ""
     var fetchedAt: Date = Date()
+    /// Correction de phase appliquée, en minutes, et station qui l'a fournie.
+    /// Absent : aucune calibration ne couvre ce lieu, les heures sont celles du
+    /// modèle, brutes. Optionnels à dessein — la clé manque dans les fichiers
+    /// écrits par une version antérieure, et un champ sec ferait échouer toute
+    /// la relecture.
+    var phaseCorrectionMinutes: Int? = nil
+    var phaseCorrectionStation: String? = nil
 
     struct TideSample: Codable, Hashable, Sendable {
         var date: Date
@@ -71,6 +78,76 @@ struct TideDay: Codable, Hashable, Sendable {
     }
 }
 
+/// Recalage des heures de marée sur les annuaires officiels.
+///
+/// Les hauteurs viennent du modèle océanique global SMOC de Météo-France, servi
+/// par Open-Meteo, dont la maille fait environ huit kilomètres. Ce modèle ne
+/// résout pas le port : pour Brest, la maille interrogée tombe à une dizaine de
+/// kilomètres au large, et Open-Meteo prévient que ces données ne conviennent
+/// pas à la navigation côtière.
+///
+/// Il en résulte une **avance systématique** : la comparaison de la série du
+/// modèle aux annuaires officiels, sur douze marées par port, donne une avance
+/// médiane de vingt-neuf à cinquante-cinq minutes selon le port, très stable
+/// d'une marée à l'autre. On la rattrape ici, comme un annuaire rattache un
+/// port secondaire à un port de référence.
+///
+/// Ce que ce recalage ne fait pas : corriger les hauteurs, ni la dispersion
+/// résiduelle — de deux à dix-huit minutes selon la station. Les heures
+/// restent indicatives, et l'application le dit.
+enum TidePhase {
+
+    /// Station calibrée : le décalage mesuré et sa dispersion, en minutes.
+    struct Station: Sendable {
+        let name: String
+        let latitude: Double
+        let longitude: Double
+        /// Minutes à ajouter aux heures du modèle.
+        let minutes: Int
+        /// Écart-type observé, pour dire honnêtement la précision atteinte.
+        let spread: Int
+    }
+
+    /// Mesures du 8 août 2026, sur les marées du 8 au 11 août, référence
+    /// tide-forecast.com. À refaire si les heures se remettent à dériver :
+    /// voir `Tools/EngineTests` pour la marche à suivre.
+    static let stations: [Station] = [
+        Station(name: "Dunkerque",   latitude: 51.0350, longitude:  2.3770, minutes: 46, spread: 15),
+        Station(name: "Dieppe",      latitude: 49.9260, longitude:  1.0780, minutes: 31, spread:  5),
+        Station(name: "Cherbourg",   latitude: 49.6500, longitude: -1.6167, minutes: 46, spread:  7),
+        Station(name: "Saint-Malo",  latitude: 48.6493, longitude: -2.0257, minutes: 47, spread: 10),
+        Station(name: "Roscoff",     latitude: 48.7240, longitude: -3.9860, minutes: 55, spread:  4),
+        Station(name: "Brest",       latitude: 48.3833, longitude: -4.4950, minutes: 52, spread:  4),
+        Station(name: "Concarneau",  latitude: 47.8720, longitude: -3.9200, minutes: 29, spread:  2),
+        Station(name: "Lorient",     latitude: 47.7280, longitude: -3.3670, minutes: 36, spread:  4),
+        Station(name: "La Rochelle", latitude: 46.1590, longitude: -1.1510, minutes: 51, spread: 18),
+    ]
+
+    /// Au-delà de cette distance, on ne corrige rien : le décalage est propre à
+    /// la façon dont le modèle représente une côte donnée, et rien ne dit qu'il
+    /// vaille ailleurs. La Méditerranée, où le marnage se compte en centimètres,
+    /// et l'outre-mer restent donc sur les heures brutes.
+    static let maxDistanceKm = 200.0
+
+    /// La station calibrée la plus proche, si elle est assez proche pour valoir.
+    static func station(for latitude: Double, longitude: Double) -> Station? {
+        let nearest = stations.min {
+            distanceKm(latitude, longitude, $0.latitude, $0.longitude)
+                < distanceKm(latitude, longitude, $1.latitude, $1.longitude)
+        }
+        guard let nearest,
+              distanceKm(latitude, longitude, nearest.latitude, nearest.longitude) <= maxDistanceKm
+        else { return nil }
+        return nearest
+    }
+
+    static func distanceKm(_ lat1: Double, _ lon1: Double, _ lat2: Double, _ lon2: Double) -> Double {
+        let dLat = (lat1 - lat2) * 111.0
+        let dLon = (lon1 - lon2) * 111.0 * cos((lat1 + lat2) / 2 * .pi / 180)
+        return (dLat * dLat + dLon * dLon).squareRoot()
+    }
+}
+
 /// Récupération des marées via l'API Marine d'Open-Meteo (libre, sans clé).
 /// La hauteur renvoyée est le niveau de la mer par rapport au niveau moyen.
 enum TideService {
@@ -78,12 +155,18 @@ enum TideService {
     enum TideError: LocalizedError {
         case network(String)
         case noCoverage
+        /// Le rafraîchissement a été interrompu — on a quitté l'écran, ou le
+        /// geste de tirer la liste a été relâché. Ce n'est pas une panne : il
+        /// ne faut ni le dire ni jeter ce qui était déjà affiché.
+        case cancelled
 
         var errorDescription: String? {
             switch self {
             case .network(let m): return m
             case .noCoverage:
                 return "Pas de données de marée pour ce point. Choisissez un port de référence."
+            case .cancelled:
+                return "Relevé interrompu."
             }
         }
     }
@@ -100,11 +183,27 @@ enum TideService {
         ]
         guard let url = comps.url else { throw TideError.network("URL invalide") }
 
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch let error as URLError where error.code == .cancelled {
+            throw TideError.cancelled
+        } catch is CancellationError {
+            throw TideError.cancelled
+        } catch {
+            throw TideError.network("Marées : \(error.localizedDescription)")
+        }
+
         guard let http = response as? HTTPURLResponse else { throw TideError.network("Réponse invalide") }
         guard http.statusCode == 200 else {
-            // Open-Meteo répond 400 hors couverture maritime.
-            throw TideError.noCoverage
+            // Tout ce qui n'est pas 200 était rangé sous « hors couverture », ce
+            // qui envoyait chercher un port de repli — et faisait un second appel
+            // condamné — là où le réseau ou le service était simplement en
+            // défaut. Open-Meteo dit la raison, on la reprend telle quelle.
+            let reason = (try? JSONDecoder().decode(MarineError.self, from: data))?.reason
+            throw TideError.network(reason.map { "Marées : \($0)" }
+                                    ?? "Marées indisponibles (erreur \(http.statusCode)).")
         }
 
         let decoded = try JSONDecoder().decode(MarineResponse.self, from: data)
@@ -121,10 +220,21 @@ enum TideService {
         }
         guard samples.count > 6 else { throw TideError.noCoverage }
 
+        // Recalage sur les annuaires officiels. La courbe est décalée avec les
+        // étales : sans cela, la hauteur lue à une heure donnée ne
+        // correspondrait plus aux pleines et basses mers affichées juste à côté.
+        let station = TidePhase.station(for: place.latitude, longitude: place.longitude)
+        if let station {
+            let shift = TimeInterval(station.minutes * 60)
+            samples = samples.map { .init(date: $0.date.addingTimeInterval(shift), height: $0.height) }
+        }
+
         var day = TideDay()
         day.samples = samples.sorted { $0.date < $1.date }
         day.marks = extrema(from: day.samples)
         day.portName = place.name
+        day.phaseCorrectionMinutes = station?.minutes
+        day.phaseCorrectionStation = station?.name
         return day
     }
 
@@ -195,6 +305,11 @@ extension Double {
 }
 
 // MARK: - Décodage Open-Meteo
+
+/// Le corps d'erreur d'Open-Meteo : `{"error":true,"reason":"…"}`.
+private struct MarineError: Decodable {
+    let reason: String
+}
 
 private struct MarineResponse: Decodable {
     let utc_offset_seconds: Int?
