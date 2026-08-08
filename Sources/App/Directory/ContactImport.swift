@@ -120,6 +120,8 @@ struct ContactImportSheet: View {
     /// Feuille du système qui élargit la liste des fiches autorisées, quand
     /// l'accès au carnet est limité.
     @State private var widening = false
+    @State private var showNewGroup = false
+    @State private var newGroup = ""
 
     /// Les fiches déjà présentes dans l'annuaire, reconnues au numéro.
     private var alreadyHere: Set<String> {
@@ -151,9 +153,9 @@ struct ContactImportSheet: View {
     }
 
     private var groups: [String] {
-        var names = Set(store.contacts.map(\.group))
-        names.formUnion(["Général", "Famille", "Travail", "Santé", "Mer", "Maison", "Urgences"])
-        return names.sorted()
+        var names = store.contactGroups
+        if !names.contains(group) { names.append(group) }
+        return names
     }
 
     var body: some View {
@@ -185,6 +187,15 @@ struct ContactImportSheet: View {
             }
             .contactAccessPicker(isPresented: $widening) { _ in
                 Task { await refresh() }
+            }
+            .alert("Nouveau groupe", isPresented: $showNewGroup) {
+                TextField("Nom du groupe", text: $newGroup)
+                Button("Ajouter") {
+                    if let name = store.addContactGroup(newGroup) { group = name }
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Les fiches importées seront rangées dans ce groupe.")
             }
         }
         .paperSheet()
@@ -359,6 +370,13 @@ struct ContactImportSheet: View {
                     Menu {
                         Picker("Groupe", selection: $group) {
                             ForEach(groups, id: \.self) { Text($0).tag($0) }
+                        }
+                        Divider()
+                        Button {
+                            newGroup = ""
+                            showNewGroup = true
+                        } label: {
+                            Label("Nouveau groupe…", systemImage: "folder.badge.plus")
                         }
                     } label: {
                         HStack(spacing: 4) {

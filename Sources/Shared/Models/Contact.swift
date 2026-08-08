@@ -37,6 +37,10 @@ struct Contact: Identifiable, Codable, Hashable, Sendable {
     /// L'anniversaire revient bien tous les ans, mais l'âge reste inconnu.
     static let unknownBirthYear = 1604
 
+    /// Les tiroirs offerts d'office. L'utilisateur en ajoute librement
+    /// d'autres — voir `Store.contactGroups`.
+    static let defaultGroups = ["Général", "Famille", "Travail", "Santé", "Mer", "Maison", "Urgences"]
+
     var knowsBirthYear: Bool {
         guard let birthday else { return false }
         return Calendar.current.component(.year, from: birthday) != Self.unknownBirthYear

@@ -96,6 +96,19 @@ struct SettingsView: View {
                     Slider(value: $store.settings.vatRate, in: 0...30, step: 0.5)
                 }
 
+                Section("Annuaire") {
+                    NavigationLink {
+                        ContactGroupsView().environment(store)
+                    } label: {
+                        HStack {
+                            Label("Groupes", systemImage: "folder")
+                            Spacer()
+                            Text("\(store.contactGroups.count)")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section("Rouleau") {
                     Button {
                         showArchive = true

@@ -214,6 +214,50 @@ final class Store {
 
     // MARK: - Annuaire
 
+    /// Tous les tiroirs de l'annuaire : ceux offerts d'office, ceux créés à la
+    /// main, et ceux qu'une fiche occupe — une fiche reprise du téléphone peut
+    /// porter un groupe qu'on n'a jamais déclaré.
+    var contactGroups: [String] {
+        var names = Set(Contact.defaultGroups)
+        names.formUnion(settings.customContactGroups ?? [])
+        names.formUnion(contacts.map(\.group))
+        return names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// Crée un tiroir. Renvoie le nom retenu, ou `nil` si le nom est vide ou
+    /// déjà pris — à la casse et aux accents près, pour éviter « Voisins » et
+    /// « voisins » côte à côte.
+    @discardableResult
+    func addContactGroup(_ raw: String) -> String? {
+        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+        let fold = { (s: String) in
+            s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+        }
+        if let existing = contactGroups.first(where: { fold($0) == fold(name) }) {
+            return existing
+        }
+        settings.customContactGroups = (settings.customContactGroups ?? []) + [name]
+        scheduleSave()
+        return name
+    }
+
+    /// Un tiroir créé à la main se retire ; ceux d'office, non.
+    func isCustomContactGroup(_ name: String) -> Bool {
+        (settings.customContactGroups ?? []).contains(name)
+    }
+
+    /// Retire un tiroir créé à la main. Les fiches qu'il contient encore
+    /// retournent au groupe par défaut, sans quoi elles deviendraient
+    /// introuvables au filtre.
+    func removeContactGroup(_ name: String) {
+        settings.customContactGroups = (settings.customContactGroups ?? []).filter { $0 != name }
+        for i in contacts.indices where contacts[i].group == name {
+            contacts[i].group = "Général"
+        }
+        persistNow()
+    }
+
     func save(contact: Contact) {
         if let i = contacts.firstIndex(where: { $0.id == contact.id }) {
             contacts[i] = contact

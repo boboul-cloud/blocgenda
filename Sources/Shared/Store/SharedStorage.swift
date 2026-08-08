@@ -83,6 +83,11 @@ struct AppSettings: Codable, Hashable, Sendable {
     /// la clé manque, et un booléen sec ferait échouer toute la relecture des
     /// réglages. Absent vaut « pas encore fait ».
     var hasImportedBirthdays: Bool? = nil
+    /// Groupes d'annuaire créés à la main. Ils sont retenus ici, et non déduits
+    /// des fiches, pour qu'un tiroir encore vide ne disparaisse pas sitôt créé.
+    /// Optionnel pour la même raison que ci-dessus : la clé manque dans les
+    /// fichiers écrits par une version antérieure.
+    var customContactGroups: [String]? = nil
 
     /// Lieu réellement utilisé pour les marées.
     var tideReference: Place { tidePort ?? place }

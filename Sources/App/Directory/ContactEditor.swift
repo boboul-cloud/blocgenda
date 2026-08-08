@@ -7,6 +7,8 @@ struct ContactEditor: View {
     @State private var hasBirthday: Bool
     @State private var birthday: Date
     @State private var showDeleteConfirm = false
+    @State private var showNewGroup = false
+    @State private var newGroup = ""
 
     private let existing: Bool
 
@@ -23,10 +25,12 @@ struct ContactEditor: View {
         Calendar.current.component(.year, from: birthday) != Contact.unknownBirthYear
     }
 
+    /// Le groupe de la fiche en fait partie même s'il vient d'être créé : sans
+    /// cela, le Picker n'aurait rien à sélectionner et s'afficherait vide.
     private var suggestedGroups: [String] {
-        var names = Set(store.contacts.map(\.group))
-        names.formUnion(["Général", "Famille", "Travail", "Santé", "Mer", "Maison", "Urgences"])
-        return names.sorted()
+        var names = store.contactGroups
+        if !names.contains(draft.group) { names.append(draft.group) }
+        return names
     }
 
     var body: some View {
@@ -56,6 +60,10 @@ struct ContactEditor: View {
                 Section("Classement") {
                     Picker("Groupe", selection: $draft.group) {
                         ForEach(suggestedGroups, id: \.self) { Text($0).tag($0) }
+                    }
+                    Button("Nouveau groupe…") {
+                        newGroup = ""
+                        showNewGroup = true
                     }
                     Toggle("Favori", isOn: $draft.isFavorite)
                     HStack(spacing: 12) {
@@ -114,6 +122,17 @@ struct ContactEditor: View {
                     dismiss()
                 }
                 Button("Annuler", role: .cancel) {}
+            }
+            .alert("Nouveau groupe", isPresented: $showNewGroup) {
+                TextField("Nom du groupe", text: $newGroup)
+                Button("Ajouter") {
+                    // Un nom déjà pris renvoie le tiroir existant : on s'y
+                    // range plutôt que d'en créer un jumeau.
+                    if let name = store.addContactGroup(newGroup) { draft.group = name }
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Voisins, Bateau, École… Le groupe apparaîtra dans le classement et dans le filtre de l’annuaire.")
             }
         }
         .paperSheet()

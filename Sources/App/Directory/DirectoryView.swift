@@ -8,6 +8,11 @@ struct DirectoryView: View {
     @State private var query = ""
     @State private var editing: Contact?
     @State private var showFavoritesOnly = false
+    /// Tiroir affiché seul. `nil` : tout l'annuaire.
+    @State private var groupFilter: String?
+    @State private var groupToDelete: String?
+    @State private var showNewGroup = false
+    @State private var newGroup = ""
     @State private var importing = false
     /// Accusé de réception de l'import, effacé au bout de quelques secondes.
     @State private var importReport: String?
@@ -18,6 +23,7 @@ struct DirectoryView: View {
         let needle = query.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
         return store.contacts
             .filter { showFavoritesOnly ? $0.isFavorite : true }
+            .filter { groupFilter == nil || $0.group == groupFilter }
             .filter { contact in
                 guard !needle.isEmpty else { return true }
                 let haystack = "\(contact.fullName) \(contact.company) \(contact.phone) \(contact.email) \(contact.group)"
@@ -69,6 +75,10 @@ struct DirectoryView: View {
 
             SearchField(text: $query, prompt: "Nom, société, numéro, groupe…")
                 .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+
+            groupFilterBar
+                .padding(.horizontal, 20)
                 .padding(.bottom, 10)
 
             if let importReport {
@@ -85,7 +95,9 @@ struct DirectoryView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 14, pinnedViews: [.sectionHeaders]) {
                         if filtered.isEmpty {
-                            EmptyDirectory(searching: !query.isEmpty) { importing = true }
+                            EmptyDirectory(searching: !query.isEmpty || groupFilter != nil) {
+                                importing = true
+                            }
                         }
                         ForEach(groups, id: \.name) { group in
                             Section {
@@ -128,11 +140,112 @@ struct DirectoryView: View {
             ContactImportSheet { added in report(added) }
                 .environment(store)
         }
+        .alert("Nouveau groupe", isPresented: $showNewGroup) {
+            TextField("Nom du groupe", text: $newGroup)
+            Button("Ajouter") {
+                guard let name = store.addContactGroup(newGroup) else { return }
+                show("Groupe « \(name) » créé.")
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Voisins, Bateau, École… Le groupe est aussitôt proposé au classement des fiches, même s’il est encore vide.")
+        }
+        .confirmationDialog("Supprimer le groupe « \(groupToDelete ?? "") » ?",
+                            isPresented: Binding(get: { groupToDelete != nil },
+                                                 set: { if !$0 { groupToDelete = nil } }),
+                            titleVisibility: .visible) {
+            Button("Supprimer le groupe", role: .destructive) {
+                if let name = groupToDelete {
+                    store.removeContactGroup(name)
+                    withAnimation(.snappy) { groupFilter = nil }
+                }
+                groupToDelete = nil
+            }
+            Button("Annuler", role: .cancel) { groupToDelete = nil }
+        } message: {
+            let orphans = groupToDelete.map { count(of: $0) } ?? 0
+            Text(orphans == 0
+                 ? "Le groupe est vide : rien d’autre ne change."
+                 : "Les \(orphans) fiche\(orphans > 1 ? "s" : "") qu’il contient ne sont pas supprimées : elles retournent au groupe Général.")
+        }
+    }
+
+    /// Le choix du tiroir. Les groupes vides y figurent aussi, avec leur
+    /// compte : un tiroir qu'on vient de créer doit se voir, sinon on le croit
+    /// perdu.
+    private var groupFilterBar: some View {
+        HStack(spacing: 8) {
+            Menu {
+                Picker("Groupe", selection: $groupFilter) {
+                    Text("Tous les groupes (\(store.contacts.count))")
+                        .tag(String?.none)
+                    ForEach(store.contactGroups, id: \.self) { name in
+                        Text("\(name) (\(count(of: name)))")
+                            .tag(String?.some(name))
+                    }
+                }
+                Divider()
+                Button {
+                    newGroup = ""
+                    showNewGroup = true
+                } label: {
+                    Label("Nouveau groupe…", systemImage: "folder.badge.plus")
+                }
+                // Le retrait n'est offert que sur le tiroir affiché, et jamais
+                // sur les groupes d'office.
+                if let current = groupFilter, store.isCustomContactGroup(current) {
+                    Button(role: .destructive) {
+                        groupToDelete = current
+                    } label: {
+                        Label("Supprimer « \(current) »", systemImage: "trash")
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: groupFilter == nil
+                          ? "line.3.horizontal.decrease.circle"
+                          : "line.3.horizontal.decrease.circle.fill")
+                        .font(Type.icon(12, weight: .semibold))
+                    Text(groupFilter ?? "Tous les groupes")
+                        .font(Type.ui(12, weight: .semibold))
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(Type.icon(9, weight: .semibold))
+                }
+                .foregroundStyle(groupFilter == nil ? Ink.textSoft : Ink.amberDeep)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(groupFilter == nil ? Ink.chassisSoft : Ink.amber.opacity(0.16))
+                        .overlay(Capsule().strokeBorder(
+                            groupFilter == nil ? Ink.chassisLine : Ink.amber, lineWidth: 1))
+                )
+            }
+            .accessibilityLabel("Filtrer par groupe")
+
+            if groupFilter != nil {
+                Button {
+                    withAnimation(.snappy) { groupFilter = nil }
+                } label: {
+                    Text("Tout voir")
+                        .font(Type.ui(12, weight: .semibold))
+                        .foregroundStyle(Ink.textFaint)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func count(of group: String) -> Int {
+        store.contacts.count { $0.group == group }
     }
 
     /// Amène à l'écran la fiche demandée par un autre onglet — l'anniversaire
-    /// que l'agenda vient de montrer, par exemple. Une recherche en cours ou le
-    /// filtre des favoris la cacheraient : on les lève d'abord.
+    /// que l'agenda vient de montrer, par exemple. Une recherche en cours, le
+    /// filtre des favoris ou celui des groupes la cacheraient : on les lève
+    /// d'abord.
     private func reveal(with proxy: ScrollViewProxy) async {
         guard let id = nav.contactToReveal else { return }
         guard store.contacts.contains(where: { $0.id == id }) else {
@@ -141,6 +254,7 @@ struct DirectoryView: View {
         }
         if !query.isEmpty { query = "" }
         if showFavoritesOnly { showFavoritesOnly = false }
+        if groupFilter != nil { groupFilter = nil }
         // Le temps que la liste se remette en place avant de viser.
         try? await Task.sleep(for: .milliseconds(120))
         guard !Task.isCancelled else { return }
@@ -160,12 +274,17 @@ struct DirectoryView: View {
 
     /// Dit ce qui vient d'entrer dans l'annuaire, puis s'efface.
     private func report(_ added: Int) {
-        let message: String
         switch added {
-        case 0: message = "Aucune fiche ajoutée : elles étaient déjà là."
-        case 1: message = "1 fiche importée."
-        default: message = "\(added) fiches importées."
+        case 0: show("Aucune fiche ajoutée : elles étaient déjà là.")
+        case 1: show("1 fiche importée.")
+        default: show("\(added) fiches importées.")
         }
+    }
+
+    /// Un mot en haut de l'annuaire, le temps d'être lu. Sert à l'import comme
+    /// à la création d'un groupe : sans lui, nommer un tiroir encore vide ne
+    /// donnerait aucun signe que quelque chose s'est passé.
+    private func show(_ message: String) {
         withAnimation(.snappy) { importReport = message }
         Task {
             try? await Task.sleep(for: .seconds(4))
