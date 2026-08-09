@@ -30,6 +30,7 @@ enum SharedStorage {
         case contacts = "contacts.json"
         case snapshot = "snapshot.json"
         case settings = "settings.json"
+        case journal = "journal.json"
     }
 
     static func url(_ file: File) -> URL {
@@ -88,6 +89,10 @@ struct AppSettings: Codable, Hashable, Sendable {
     /// Optionnel pour la même raison que ci-dessus : la clé manque dans les
     /// fichiers écrits par une version antérieure.
     var customContactGroups: [String]? = nil
+    /// Thèmes de l'agenda créés à la main. Retenus ici, et non déduits des
+    /// rendez-vous, pour qu'un thème encore inemployé reste proposé au menu.
+    /// Optionnel pour la même raison que ci-dessus.
+    var customEventThemes: [String]? = nil
 
     /// Lieu réellement utilisé pour les marées.
     var tideReference: Place { tidePort ?? place }

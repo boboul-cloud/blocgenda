@@ -43,6 +43,13 @@ struct AgendaEvent: Identifiable, Codable, Hashable, Sendable {
     var reminders: [Int] = [15]
     var place: String = ""
     var colorIndex: Int = 0
+    /// Sujet du rendez-vous — anniversaire, véhicule, santé… C'est par lui que
+    /// l'agenda retrouve d'un geste tout ce qui touche à la même affaire.
+    ///
+    /// Optionnel à dessein : la clé manque dans les fichiers écrits par une
+    /// version antérieure, et une chaîne sèche ferait échouer la relecture de
+    /// tout l'agenda. Absent vaut « sans thème ».
+    var theme: String? = nil
     var contactID: UUID? = nil
     /// Fiche dont ce rendez-vous est l'anniversaire. Renseigné uniquement pour
     /// les rendez-vous que l'annuaire tient à jour tout seul.
@@ -53,6 +60,19 @@ struct AgendaEvent: Identifiable, Codable, Hashable, Sendable {
     var end: Date { start.addingTimeInterval(isAllDay ? 0 : duration) }
 
     var isBirthday: Bool { birthdayContactID != nil }
+
+    /// Le thème tel qu'on l'affiche : vide quand le rendez-vous n'en porte pas.
+    var themeName: String {
+        theme?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    var hasTheme: Bool { !themeName.isEmpty }
+
+    /// Le rendez-vous relève-t-il de ce thème ? La comparaison passe par la
+    /// clé : « Véhicule » et « vehicule » désignent le même sujet.
+    func belongs(toTheme name: String) -> Bool {
+        hasTheme && Self.themeKey(themeName) == Self.themeKey(name)
+    }
 
     func isCompleted(on day: Date) -> Bool {
         completedDays.contains(Calendar.current.startOfDay(for: day))
@@ -89,6 +109,44 @@ struct AgendaEvent: Identifiable, Codable, Hashable, Sendable {
 
         let time = cal.dateComponents([.hour, .minute], from: start)
         return cal.date(bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: target)
+    }
+
+    /// Le prochain jour où le rendez-vous tombe, à partir de `day` compris.
+    /// `nil` s'il n'en reste aucun dans la fenêtre observée — un rendez-vous
+    /// unique déjà passé, par exemple.
+    ///
+    /// La fenêtre couvre un peu plus d'un an : assez pour attraper la
+    /// prochaine occurrence d'une récurrence annuelle, un anniversaire compris.
+    func nextStart(from day: Date = Date(), within days: Int = 400) -> Date? {
+        let cal = Calendar.current
+        let first = cal.startOfDay(for: day)
+        for offset in 0..<days {
+            guard let d = cal.date(byAdding: .day, value: offset, to: first) else { continue }
+            if let hit = occurrence(on: d) { return hit }
+        }
+        return nil
+    }
+}
+
+// MARK: - Thèmes
+
+extension AgendaEvent {
+    /// Les thèmes offerts d'office. Ce sont les affaires que l'on suit d'une
+    /// année sur l'autre : on les trouve déjà là plutôt que d'avoir à les
+    /// nommer soi-même avant de s'en servir.
+    static let defaultThemes = ["Anniversaire", "Véhicule", "Santé", "Maison",
+                                "Travail", "Famille", "Loisirs", "Papiers"]
+
+    /// Le thème donné aux anniversaires venus de l'annuaire.
+    static let birthdayTheme = "Anniversaire"
+
+    /// Clé de rapprochement des thèmes : deux noms qui ne diffèrent que par la
+    /// casse, les accents ou les espaces de bordure désignent le même thème.
+    /// Tout ce qui range ou retrouve un rendez-vous suit cette règle, sans quoi
+    /// un rendez-vous se classerait sous un thème que le filtre n'atteint plus.
+    static func themeKey(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
     }
 }
 
@@ -131,6 +189,21 @@ extension AgendaEvent {
         start = calendar.date(bySettingHour: Self.birthdayHour, minute: 0, second: 0, of: day) ?? day
         isAllDay = true
         repeatRule = .yearly
+        adoptBirthdayTheme()
+    }
+
+    /// Un anniversaire de l'annuaire relève du thème « Anniversaire », sans
+    /// qu'on ait à le dire : c'est le seul rendez-vous que l'application écrit
+    /// elle-même, elle le range elle-même.
+    ///
+    /// Un thème choisi à la main depuis l'agenda fait exception et reste en
+    /// place : on peut vouloir suivre l'anniversaire d'un enfant sous « Famille ».
+    /// Renvoie `true` si le thème vient d'être posé.
+    @discardableResult
+    mutating func adoptBirthdayTheme() -> Bool {
+        guard isBirthday, !hasTheme else { return false }
+        theme = Self.birthdayTheme
+        return true
     }
 }
 

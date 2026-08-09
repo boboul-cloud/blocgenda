@@ -5,7 +5,56 @@ numérotation [SemVer](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+## [1.1] - 2026-08-09
+
+### Ajouté
+
+- **Thèmes de l'agenda.** La fiche d'un rendez-vous porte désormais un
+  **thème** — anniversaire, véhicule, santé, maison, travail, famille, loisirs,
+  papiers — choisi dans un menu déroulant qui propose les thèmes d'office et
+  tous ceux que l'on crée, depuis la fiche, depuis l'agenda ou depuis
+  *Réglages ▸ Agenda ▸ Thèmes*. En haut de l'agenda, **Rechercher un thème**
+  quitte la journée pour le sujet et rassemble tout ce qui s'y rapporte, la
+  prochaine échéance d'abord, le passé ensuite ; chaque rendez-vous n'y paraît
+  qu'une fois, à sa prochaine date, pour qu'une récurrence quotidienne ne
+  remplisse pas la page à elle seule. Deux noms qui ne diffèrent que par la
+  casse ou les accents désignent le même thème. **Les anniversaires venus de
+  l'annuaire se rangent seuls sous « Anniversaire »** — ceux que l'agenda tient
+  déjà comme ceux qu'une date de naissance y inscrira ; c'est le seul
+  rendez-vous que l'application écrit elle-même, elle le range elle-même. Un
+  anniversaire déplacé à la main sous un autre thème — « Famille », par
+  exemple — y reste, et une modification de la fiche ne l'en sort pas.
+  Retirer un thème ne
+  supprime aucun rendez-vous : ceux qu'il rangeait se retrouvent sans thème.
+
+- **Journal du jour.** Un cinquième écran, sur feuille de classeur : réglure
+  bleue, marge rouge, perforations. On y dépose au fil de la journée des
+  moments et des pensées — au clavier ou dictés — sans que rien ne soit analysé
+  ni rangé ailleurs : le journal ne fait pas de calculs et ne prend pas de
+  rendez-vous. Un moteur remet la page en forme selon **l'humeur du moment**,
+  et l'on peut en changer autant de fois qu'on veut sans rien perdre :
+  *posée* coud les moments en paragraphes, du matin au soir ; *vive* garde une
+  ligne par moment, l'heure en marge, et tire en exergue la phrase la plus
+  forte ; *songeuse* efface les heures et les titres, met une pensée en tête de
+  page et laisse couler le reste. L'écriture tombe sur les lignes : chaque bloc
+  occupe un nombre entier de réglures, y compris les titres et les citations en
+  gros corps. Chaque page **retient la journée qu'il faisait** — température et
+  ciel, lever et coucher, longueur du jour, lune, vent, pleine mer, saint,
+  dicton, anniversaires, « ce jour-là » — relevé une fois pour toutes : dans un
+  an, la météo du 9 août ne se retrouve plus. On tourne les pages vers le passé,
+  jamais vers l'avenir, et la liste des moments permet de corriger une dictée
+  mal comprise ou de retirer une ligne.
+
 ### Corrigé
+
+- **La carte d'un rendez-vous découpait ses informations en colonnes.** Le
+  thème, le lieu, la répétition et le rappel se partageaient une seule rangée :
+  dès qu'ils étaient trois ou quatre, ou qu'une adresse un peu longue s'y
+  trouvait, chacun était comprimé jusqu'à empiler ses lettres une par ligne. La
+  rangée passe désormais à la ligne : chaque information garde sa largeur
+  naturelle, le lieu peut prendre deux lignes — une adresse complète tient donc
+  tout entière — et le nom du thème recherché ne se coupe plus dans son
+  bouton.
 
 - **« Voir la fiche » ouvrait l'annuaire sans montrer la personne.** Le lien
   d'un anniversaire, dans l'agenda, changeait bien d'onglet mais laissait la

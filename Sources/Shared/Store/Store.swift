@@ -10,6 +10,8 @@ final class Store {
     var tape: [TapeEntry] = []
     var events: [AgendaEvent] = []
     var contacts: [Contact] = []
+    /// Les pages du journal du jour, une par journée écrite.
+    var journal: [JournalPage] = []
     var settings = AppSettings()
 
     /// Données du jour dépendant du lieu (soleil, lune, marée, météo).
@@ -22,6 +24,7 @@ final class Store {
         tape = SharedStorage.load([TapeEntry].self, from: .tape) ?? []
         events = SharedStorage.load([AgendaEvent].self, from: .events) ?? []
         contacts = SharedStorage.load([Contact].self, from: .contacts) ?? []
+        journal = SharedStorage.load([JournalPage].self, from: .journal) ?? []
         settings = SharedStorage.load(AppSettings.self, from: .settings) ?? AppSettings()
         if !settings.hasSeededSample && tape.isEmpty && events.isEmpty && contacts.isEmpty {
             seedSampleContent()
@@ -29,6 +32,23 @@ final class Store {
             persistNow()
         }
         importBirthdaysIfNeeded()
+        adoptBirthdayThemes()
+    }
+
+    /// Les anniversaires inscrits à l'agenda avant que les thèmes n'existent
+    /// n'en portent aucun : ils se rangent sous « Anniversaire » au lancement.
+    ///
+    /// Sans témoin en réglages, contrairement au report des dates de naissance :
+    /// la passe ne touche que les anniversaires **sans thème**, elle est donc
+    /// sans effet la fois d'après, et un anniversaire rangé à la main sous un
+    /// autre thème n'est pas déplacé.
+    private func adoptBirthdayThemes() {
+        var changed = false
+        for i in events.indices {
+            if events[i].adoptBirthdayTheme() { changed = true }
+        }
+        guard changed else { return }
+        persistNow()
     }
 
     /// Les fiches déjà remplies avant que l'annuaire ne tienne l'agenda à jour
@@ -58,6 +78,7 @@ final class Store {
         SharedStorage.save(tape, to: .tape)
         SharedStorage.save(events, to: .events)
         SharedStorage.save(contacts, to: .contacts)
+        SharedStorage.save(journal, to: .journal)
         SharedStorage.save(settings, to: .settings)
         refreshWidget()
     }
@@ -210,6 +231,93 @@ final class Store {
             events[i].completedDays.insert(key)
         }
         scheduleSave()
+    }
+
+    // MARK: - Thèmes de l'agenda
+
+    /// Tous les thèmes proposés : ceux offerts d'office, ceux créés à la main,
+    /// et ceux qu'un rendez-vous porte déjà — un fichier repris d'un autre
+    /// appareil peut en contenir qu'on n'a jamais déclaré ici.
+    ///
+    /// Un seul nom par thème, et toujours le même d'un lancement à l'autre :
+    /// c'est le premier rencontré qui fait foi, les thèmes d'office d'abord.
+    /// Même règle que les tiroirs de l'annuaire, pour les mêmes raisons.
+    var eventThemes: [String] {
+        var seen = Set<String>()
+        var names: [String] = []
+        for name in AgendaEvent.defaultThemes + (settings.customEventThemes ?? []) + events.map(\.themeName) {
+            let key = AgendaEvent.themeKey(name)
+            guard !key.isEmpty, seen.insert(key).inserted else { continue }
+            names.append(name)
+        }
+        return names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// Crée un thème. Renvoie le nom retenu, ou `nil` si le nom est vide ;
+    /// s'il existe déjà — à la casse et aux accents près — c'est le nom déjà
+    /// en place qui est renvoyé, pour ne pas voir « Santé » et « santé » côte
+    /// à côte dans le menu.
+    @discardableResult
+    func addEventTheme(_ raw: String) -> String? {
+        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+        let key = AgendaEvent.themeKey(name)
+        if let existing = eventThemes.first(where: { AgendaEvent.themeKey($0) == key }) {
+            return existing
+        }
+        settings.customEventThemes = (settings.customEventThemes ?? []) + [name]
+        scheduleSave()
+        return name
+    }
+
+    /// Un thème créé à la main se retire ; ceux d'office, non.
+    func isCustomEventTheme(_ name: String) -> Bool {
+        let key = AgendaEvent.themeKey(name)
+        guard !AgendaEvent.defaultThemes.contains(where: { AgendaEvent.themeKey($0) == key }) else {
+            return false
+        }
+        return (settings.customEventThemes ?? []).contains { AgendaEvent.themeKey($0) == key }
+    }
+
+    /// Retire un thème. Les rendez-vous qui le portaient ne sont pas supprimés :
+    /// ils redeviennent simplement sans thème.
+    func removeEventTheme(_ name: String) {
+        let key = AgendaEvent.themeKey(name)
+        settings.customEventThemes = (settings.customEventThemes ?? [])
+            .filter { AgendaEvent.themeKey($0) != key }
+        for i in events.indices where AgendaEvent.themeKey(events[i].themeName) == key {
+            events[i].theme = nil
+        }
+        persistNow()
+    }
+
+    /// Le nombre de rendez-vous par thème, en une passe, indexé par clé.
+    func eventThemeCounts() -> [String: Int] {
+        Dictionary(events.filter(\.hasTheme).map { (AgendaEvent.themeKey($0.themeName), 1) },
+                   uniquingKeysWith: +)
+    }
+
+    /// La recherche par thème : les rendez-vous du sujet demandé, le plus
+    /// proche d'abord.
+    ///
+    /// Chaque rendez-vous ne paraît qu'une fois, à sa prochaine échéance — sans
+    /// quoi une récurrence quotidienne remplirait la page à elle seule. Ceux
+    /// qui n'ont plus rien devant eux ferment la marche, du plus récent au plus
+    /// ancien : un contrôle technique passé se retrouve encore.
+    func themeHits(_ name: String, from day: Date = Date()) -> [EventOccurrence] {
+        let today = Calendar.current.startOfDay(for: day)
+        var upcoming: [EventOccurrence] = []
+        var past: [EventOccurrence] = []
+        for event in events where event.belongs(toTheme: name) {
+            if let next = event.nextStart(from: today) {
+                upcoming.append(EventOccurrence(event: event, start: next))
+            } else {
+                past.append(EventOccurrence(event: event, start: event.start))
+            }
+        }
+        upcoming.sort { $0.start < $1.start }
+        past.sort { $0.start > $1.start }
+        return upcoming + past
     }
 
     // MARK: - Annuaire
@@ -531,6 +639,7 @@ final class Store {
         rdv.repeatRule = .weekly
         rdv.place = "Quai Malbert"
         rdv.colorIndex = 1
+        rdv.theme = "Loisirs"
         events = [rdv]
 
         tape = [

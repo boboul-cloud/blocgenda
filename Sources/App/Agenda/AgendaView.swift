@@ -7,6 +7,10 @@ struct AgendaView: View {
     @State private var selectedDay = Calendar.current.startOfDay(for: Date())
     @State private var editing: AgendaEvent?
     @State private var weekOffset = 0
+    /// Thème recherché. `nil` : la journée choisie, comme d'habitude.
+    @State private var themeFilter: String?
+    @State private var showNewTheme = false
+    @State private var newTheme = ""
 
     private var weekDays: [Date] {
         let cal = Calendar.current
@@ -37,11 +41,16 @@ struct AgendaView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Calculée une fois pour toute la passe : la recherche par thème
+        // parcourt l'année à venir, rendez-vous par rendez-vous.
+        let hits = themeFilter.map { store.themeHits($0) } ?? []
+
+        return VStack(spacing: 0) {
             ScreenHeader(title: "Agenda",
-                         subtitle: Fmt.dayTitle(selectedDay)) {
+                         subtitle: subtitle(hits: hits)) {
                 HStack(spacing: 8) {
-                    if !Calendar.current.isDateInToday(selectedDay) || weekOffset != 0 {
+                    if themeFilter == nil,
+                       !Calendar.current.isDateInToday(selectedDay) || weekOffset != 0 {
                         Button {
                             withAnimation(.snappy) {
                                 weekOffset = 0
@@ -58,6 +67,10 @@ struct AgendaView: View {
                     Button {
                         var event = AgendaEvent()
                         event.start = defaultStart(on: selectedDay)
+                        // Un rendez-vous ajouté pendant qu'un thème est affiché
+                        // arrive déjà rangé sous ce thème : c'est bien de lui
+                        // qu'on s'occupe à ce moment-là.
+                        event.theme = themeFilter
                         editing = event
                     } label: {
                         Image(systemName: "plus")
@@ -72,18 +85,180 @@ struct AgendaView: View {
                 .buttonStyle(.plain)
             }
 
-            WeekStrip(days: weekDays,
-                      selected: $selectedDay,
-                      offset: $weekOffset,
-                      density: densities)
+            themeFilterBar
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
 
-            ScrollView {
-                VStack(spacing: 10) {
-                    if occurrences.isEmpty && dayEntries.isEmpty {
-                        EmptyDay(day: selectedDay)
+            if let theme = themeFilter {
+                themeResults(theme: theme, hits: hits)
+            } else {
+                WeekStrip(days: weekDays,
+                          selected: $selectedDay,
+                          offset: $weekOffset,
+                          density: densities)
+
+                ScrollView {
+                    VStack(spacing: 10) {
+                        if occurrences.isEmpty && dayEntries.isEmpty {
+                            EmptyDay(day: selectedDay)
+                        }
+
+                        ForEach(occurrences) { occurrence in
+                            EventRow(occurrence: occurrence) {
+                                editing = occurrence.event
+                            } onToggle: {
+                                withAnimation(.snappy) {
+                                    store.toggleCompletion(of: occurrence.event, on: occurrence.start)
+                                }
+                            }
+                        }
+
+                        if !dayEntries.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("NOTES ET ACTIONS")
+                                    .font(Type.micro).tracking(1.4)
+                                    .foregroundStyle(Ink.textFaint)
+                                    .padding(.horizontal, 4)
+                                ForEach(dayEntries) { entry in
+                                    AgendaTapeRow(entry: entry,
+                                                  currency: store.settings.currencySymbol)
+                                }
+                            }
+                        }
+
+                        Color.clear.frame(height: 12)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .animation(.snappy(duration: 0.25), value: dayEntries.count)
+                }
+                .scrollDismissesKeyboard(.interactively)
 
-                    ForEach(occurrences) { occurrence in
+                SmartBar(text: $draft,
+                         showKeypad: .constant(false),
+                         focused: $inputFocused,
+                         onSubmit: print,
+                         placeholder: barPlaceholder,
+                         showsKeypadToggle: false,
+                         reference: referenceDate,
+                         tagSuggestions: store.frequentTags())
+            }
+
+            Color.clear.frame(height: Type.tabBarInset) // place pour la barre d’onglets
+        }
+        .background(Ink.chassis)
+        .sheet(item: $editing) { event in
+            EventEditor(event: event).environment(store).environment(nav)
+        }
+        .alert("Nouveau thème", isPresented: $showNewTheme) {
+            TextField("Nom du thème", text: $newTheme)
+                .accessibilityIdentifier("theme.nom")
+            Button("Ajouter") {
+                guard let name = store.addEventTheme(newTheme) else { return }
+                withAnimation(.snappy) { themeFilter = name }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Véhicule, école, bateau, impôts… Le thème est aussitôt proposé à la fiche de chaque rendez-vous.")
+        }
+    }
+
+    // MARK: - Recherche par thème
+
+    private func subtitle(hits: [EventOccurrence]) -> String {
+        guard themeFilter != nil else { return Fmt.dayTitle(selectedDay) }
+        switch hits.count {
+        case 0: return "Aucun rendez-vous"
+        case 1: return "1 rendez-vous"
+        default: return "\(hits.count) rendez-vous"
+        }
+    }
+
+    /// Le choix du thème. Les thèmes encore inemployés y figurent aussi, avec
+    /// leur compte : un thème qu'on vient de nommer doit se voir, sinon on le
+    /// croit perdu.
+    private var themeFilterBar: some View {
+        let counts = store.eventThemeCounts()
+        return HStack(spacing: 8) {
+            Menu {
+                Picker("Thème", selection: Binding(get: { themeFilter },
+                                                   set: { value in
+                    withAnimation(.snappy) { themeFilter = value }
+                })) {
+                    Text("Toute la journée choisie").tag(String?.none)
+                    ForEach(store.eventThemes, id: \.self) { name in
+                        Text("\(name) (\(counts[AgendaEvent.themeKey(name)] ?? 0))")
+                            .tag(String?.some(name))
+                    }
+                }
+                Divider()
+                Button {
+                    newTheme = ""
+                    showNewTheme = true
+                } label: {
+                    Label("Nouveau thème…", systemImage: "tag")
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: themeFilter == nil ? "tag" : "tag.fill")
+                        .font(Type.icon(12, weight: .semibold))
+                    Text(themeFilter ?? "Rechercher un thème")
+                        .font(Type.ui(12, weight: .semibold))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(Type.icon(9, weight: .semibold))
+                }
+                .foregroundStyle(themeFilter == nil ? Ink.textSoft : Ink.amberDeep)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(themeFilter == nil ? Ink.chassisSoft : Ink.amber.opacity(0.16))
+                        .overlay(Capsule().strokeBorder(
+                            themeFilter == nil ? Ink.chassisLine : Ink.amber, lineWidth: 1))
+                )
+            }
+            // Le nom du thème passe avant le bouton de sortie : c'est lui qui
+            // dit ce qu'on regarde, et il ne doit pas se couper pour laisser la
+            // place au reste.
+            .layoutPriority(1)
+            .accessibilityIdentifier("agenda.theme")
+            .accessibilityLabel("Rechercher par thème")
+
+            if themeFilter != nil {
+                Button {
+                    withAnimation(.snappy) { themeFilter = nil }
+                } label: {
+                    Text("Revenir au jour")
+                        .font(Type.ui(12, weight: .semibold))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .foregroundStyle(Ink.textFaint)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("agenda.theme.fermer")
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// Ce que donne la recherche : chaque rendez-vous du thème, à sa prochaine
+    /// échéance, rangé sous le jour où il tombe.
+    private func themeResults(theme: String, hits: [EventOccurrence]) -> some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 10) {
+                if hits.isEmpty {
+                    EmptyTheme(theme: theme)
+                }
+                ForEach(themeDays(of: hits)) { group in
+                    Text(dayLabel(group.day).uppercased())
+                        .font(Type.micro).tracking(1.4)
+                        .foregroundStyle(Ink.textFaint)
+                        .padding(.horizontal, 4)
+                        .padding(.top, 4)
+                    ForEach(group.hits) { occurrence in
                         EventRow(occurrence: occurrence) {
                             editing = occurrence.event
                         } onToggle: {
@@ -92,43 +267,39 @@ struct AgendaView: View {
                             }
                         }
                     }
-
-                    if !dayEntries.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("NOTES ET ACTIONS")
-                                .font(Type.micro).tracking(1.4)
-                                .foregroundStyle(Ink.textFaint)
-                                .padding(.horizontal, 4)
-                            ForEach(dayEntries) { entry in
-                                AgendaTapeRow(entry: entry,
-                                              currency: store.settings.currencySymbol)
-                            }
-                        }
-                    }
-
-                    Color.clear.frame(height: 12)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .animation(.snappy(duration: 0.25), value: dayEntries.count)
+                Color.clear.frame(height: 12)
             }
-            .scrollDismissesKeyboard(.interactively)
-
-            SmartBar(text: $draft,
-                     showKeypad: .constant(false),
-                     focused: $inputFocused,
-                     onSubmit: print,
-                     placeholder: barPlaceholder,
-                     showsKeypadToggle: false,
-                     reference: referenceDate,
-                     tagSuggestions: store.frequentTags())
-
-            Color.clear.frame(height: Type.tabBarInset) // place pour la barre d’onglets
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
         }
-        .background(Ink.chassis)
-        .sheet(item: $editing) { event in
-            EventEditor(event: event).environment(store).environment(nav)
+    }
+
+    /// Les résultats rassemblés par jour, dans l'ordre où ils viennent — les
+    /// échéances à venir d'abord, le passé ensuite.
+    private func themeDays(of hits: [EventOccurrence]) -> [ThemeDay] {
+        let cal = Calendar.current
+        var groups: [ThemeDay] = []
+        for hit in hits {
+            let day = cal.startOfDay(for: hit.start)
+            if let last = groups.last, last.day == day {
+                groups[groups.count - 1].hits.append(hit)
+            } else {
+                groups.append(ThemeDay(day: day, hits: [hit]))
+            }
         }
+        return groups
+    }
+
+    /// L'année n'est écrite que lorsqu'elle n'est pas la nôtre : la recherche
+    /// va jusqu'à l'anniversaire de l'an prochain, et « mardi 3 mars » tout
+    /// court laisserait croire à celui qui vient de passer.
+    private func dayLabel(_ day: Date) -> String {
+        let cal = Calendar.current
+        let title = Fmt.dayTitle(day)
+        let year = cal.component(.year, from: day)
+        guard year != cal.component(.year, from: Date()) else { return title }
+        return "\(title) \(year)"
     }
 
     // MARK: - Saisie
@@ -168,6 +339,42 @@ struct AgendaView: View {
         let cal = Calendar.current
         let hour = cal.isDateInToday(day) ? min(cal.component(.hour, from: Date()) + 1, 21) : 9
         return cal.date(bySettingHour: hour, minute: 0, second: 0, of: day) ?? day
+    }
+}
+
+/// Un jour de résultats et les rendez-vous du thème qui y tombent.
+///
+/// Une structure nommée plutôt qu'un n-uplet : `ForEach` réclame une identité,
+/// et il faut que le contenu compte dans la comparaison — sans quoi une liste
+/// garderait à l'écran des rendez-vous qui ont changé sous elle.
+private struct ThemeDay: Identifiable, Equatable {
+    var day: Date
+    var hits: [EventOccurrence]
+
+    var id: Date { day }
+}
+
+/// Un thème sans rendez-vous : on le nomme, plutôt que de laisser une page
+/// blanche faire croire à une panne.
+struct EmptyTheme: View {
+    let theme: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "tag.slash")
+                .font(Type.icon(26, weight: .light))
+                .foregroundStyle(Ink.textFaint)
+            Text("Aucun rendez-vous sous « \(theme) ».")
+                .font(Type.ui(14, weight: .medium))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.textSoft)
+            Text("Ajoutez-en un avec le bouton +, ou\nchoisissez ce thème dans une fiche existante.")
+                .font(Type.ui(12))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Ink.textFaint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 50)
     }
 }
 
@@ -313,15 +520,22 @@ struct EventRow: View {
                     .font(Type.ui(14, weight: .semibold))
                     .strikethrough(occurrence.isCompleted, color: Ink.textFaint)
                     .foregroundStyle(occurrence.isCompleted ? Ink.textFaint : Ink.text)
-                HStack(spacing: 6) {
+                FlowRow(spacing: 8, lineSpacing: 3) {
+                    if event.hasTheme {
+                        meta(event.themeName, "tag")
+                            .foregroundStyle(Ink.amberDeep)
+                    }
                     if !event.place.isEmpty {
-                        Label(event.place, systemImage: "mappin")
+                        // Le lieu est le seul à pouvoir prendre deux lignes :
+                        // une adresse saisie en entier tient alors tout entière,
+                        // là où les autres informations sont des mots.
+                        meta(event.place, "mappin", lines: 2)
                     }
                     if event.repeatRule != .none {
-                        Label(event.repeatRule.shortLabel, systemImage: "repeat")
+                        meta(event.repeatRule.shortLabel, "repeat")
                     }
                     if !event.reminders.isEmpty {
-                        Label("\(event.reminders.count)", systemImage: "bell.fill")
+                        meta("\(event.reminders.count)", "bell.fill")
                     }
                 }
                 .font(Type.ui(10.5))
@@ -358,6 +572,15 @@ struct EventRow: View {
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+    }
+
+    /// Une information de second rang : elle tient sur une ligne — deux pour un
+    /// lieu — et se tronque plutôt que de s'étirer en colonne d'une lettre.
+    private func meta(_ text: String, _ symbol: String, lines: Int = 1) -> some View {
+        Label(text, systemImage: symbol)
+            .lineLimit(lines)
+            .truncationMode(.tail)
+            .multilineTextAlignment(.leading)
     }
 }
 

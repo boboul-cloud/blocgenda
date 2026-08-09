@@ -191,5 +191,125 @@ print("  coucher \(sun.sunset.map { hm.string(from: $0) } ?? "—")   (attendu �
 let moon = Astro.moonIllumination(date: ref)
 print("  lune    \(moon.name), \(Int(moon.fraction * 100)) % éclairée, âge \(String(format: "%.1f", moon.age)) j")
 
+print("\n── Journal du jour ──")
+
+func moment(_ hour: Int, _ minute: Int, _ text: String) -> JournalNote {
+    JournalNote(date: cal.date(bySettingHour: hour, minute: minute, second: 0, of: ref)!,
+                text: text)
+}
+
+let moments = [
+    moment(7, 20, "réveil dans le brouillard"),
+    moment(9, 5, "café sur le quai"),
+    moment(14, 30, "le vent a tourné !"),
+    moment(21, 10, "on a mangé dehors")
+]
+
+func mise(_ mood: JournalMood, _ notes: [JournalNote] = moments) -> String {
+    var page = JournalPage(day: cal.startOfDay(for: ref), mood: mood)
+    page.notes = notes
+    return JournalLayout.compose(page).map { block in
+        switch block {
+        case .heading(let t): return "T(\(t))"
+        case .paragraph(_, let t, _): return "P(\(t))"
+        case .line(let n): return "L(\(n.trimmed))"
+        case .pull(let n): return "E(\(n.trimmed))"
+        case .rule: return "—"
+        }
+    }.joined(separator: " ")
+}
+
+check("humeur posée",
+      mise(.posee),
+      "T(Matin) P(Réveil dans le brouillard. Café sur le quai.) — T(Après-midi) "
+      + "P(Le vent a tourné !) — T(Soir) P(On a mangé dehors.)")
+check("humeur vive",
+      mise(.vive),
+      "T(Matin) L(réveil dans le brouillard) L(café sur le quai) — T(Après-midi) "
+      + "E(le vent a tourné !) — T(Soir) L(on a mangé dehors)")
+// À nombre de mots égal, c'est le moment le plus ancien qui monte en tête de
+// page : la page doit se composer deux fois de suite de la même façon.
+check("humeur songeuse",
+      mise(.songeuse),
+      "E(réveil dans le brouillard) — P(Café sur le quai. Le vent a tourné ! On a mangé dehors.)")
+check("la maxime préférée à la tartine",
+      mise(.songeuse, [moment(8, 0, "il a plu toute la nuit sur le toit de la véranda, et je n'ai pas fermé l'œil"),
+                       moment(9, 0, "rien ne presse")]),
+      "E(rien ne presse) — P(Il a plu toute la nuit sur le toit de la véranda, et je n'ai pas fermé l'œil.)")
+
+check("les moments se rangent par demi-journée",
+      JournalLayout.groups(of: moments).map { "\($0.moment.title)×\($0.notes.count)" }
+          .joined(separator: ","),
+      "Matin×2,Après-midi×1,Soir×1")
+check("la couture ne double pas la ponctuation",
+      JournalLayout.sewn([moment(8, 0, "il pleut."), moment(9, 0, "et alors ?")]),
+      "Il pleut. Et alors ?")
+check("une page vide ne compose rien",
+      "\(JournalLayout.compose(JournalPage(day: ref)).count)", "0")
+check("un seul moment n'est pas mis en exergue",
+      mise(.vive, [moment(8, 0, "seul au monde")]), "T(Matin) L(seul au monde)")
+
+print("\n── Thèmes de l'agenda ──")
+
+func theme(_ name: String) -> AgendaEvent {
+    var event = AgendaEvent()
+    event.title = "Contrôle technique"
+    event.theme = name
+    event.start = ref
+    return event
+}
+
+check("le thème se compare sans casse ni accent",
+      "\(theme("Véhicule").belongs(toTheme: "vehicule"))", "true")
+check("deux thèmes voisins ne se confondent pas",
+      "\(theme("Véhicule").belongs(toTheme: "Santé"))", "false")
+check("les espaces de bordure ne font pas un thème neuf",
+      AgendaEvent.themeKey("  Santé "), AgendaEvent.themeKey("sante"))
+check("un rendez-vous sans thème n'appartient à aucun",
+      "\(AgendaEvent().hasTheme) \(AgendaEvent().belongs(toTheme: "Santé"))", "false false")
+check("un thème réduit à des espaces vaut absent",
+      "\(theme("   ").hasTheme)", "false")
+let marie = Contact(firstName: "Marie", lastName: "Lambert", birthday: ref)
+check("l'anniversaire venu de l'annuaire porte son thème",
+      AgendaEvent.birthday(for: marie)?.themeName ?? "—", "Anniversaire")
+
+// Un anniversaire inscrit avant que les thèmes n'existent se range tout seul,
+// mais celui qu'on a déplacé à la main sous un autre sujet ne bouge plus.
+var ancien = AgendaEvent()
+ancien.applyBirthday(of: marie, on: ref)
+ancien.theme = nil
+check("un anniversaire sans thème en adopte un",
+      "\(ancien.adoptBirthdayTheme()) \(ancien.themeName)", "true Anniversaire")
+check("et ne le reprend pas deux fois",
+      "\(ancien.adoptBirthdayTheme())", "false")
+var range = ancien
+range.theme = "Famille"
+check("un anniversaire rangé à la main n'est pas déplacé",
+      "\(range.adoptBirthdayTheme()) \(range.themeName)", "false Famille")
+range.applyBirthday(of: marie, on: ref)
+check("et l'annuaire ne l'écrase pas en se mettant à jour",
+      range.themeName, "Famille")
+var ordinaire = AgendaEvent()
+ordinaire.title = "Contrôle technique"
+check("un rendez-vous ordinaire ne devient pas un anniversaire",
+      "\(ordinaire.adoptBirthdayTheme()) \(ordinaire.hasTheme)", "false false")
+
+// La recherche par thème n'affiche qu'une échéance par rendez-vous : c'est
+// celle-là qu'il faut trouver, même lorsqu'elle est loin devant.
+let jourRef = cal.startOfDay(for: ref)
+var annuel = theme("Véhicule")
+annuel.repeatRule = .yearly
+check("la prochaine échéance d'un rendez-vous annuel",
+      annuel.nextStart(from: cal.date(byAdding: .day, value: 1, to: jourRef)!)
+          .map { df.string(from: $0) } ?? "nil",
+      "07/08 09:00")   // celle de l'an prochain, à l'heure d'origine
+check("un rendez-vous unique déjà passé n'a plus d'échéance",
+      theme("Véhicule").nextStart(from: cal.date(byAdding: .day, value: 1, to: jourRef)!)
+          .map { df.string(from: $0) } ?? "nil",
+      "nil")
+check("le jour même compte pour une échéance",
+      theme("Véhicule").nextStart(from: jourRef).map { df.string(from: $0) } ?? "nil",
+      "07/08 09:00")
+
 print("\n\(failures == 0 ? "Tout est vert." : "\(failures) échec(s).")")
 exit(failures == 0 ? 0 : 1)

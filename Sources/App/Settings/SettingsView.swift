@@ -96,6 +96,19 @@ struct SettingsView: View {
                     Slider(value: $store.settings.vatRate, in: 0...30, step: 0.5)
                 }
 
+                Section("Agenda") {
+                    NavigationLink {
+                        EventThemesView().environment(store)
+                    } label: {
+                        HStack {
+                            Label("Thèmes", systemImage: "tag")
+                            Spacer()
+                            Text("\(store.eventThemes.count)")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section("Annuaire") {
                     NavigationLink {
                         ContactGroupsView().environment(store)
