@@ -7,6 +7,16 @@ numérotation [SemVer](https://semver.org/lang/fr/).
 
 ### Corrigé
 
+- **« Voir la fiche » ouvrait l'annuaire sans montrer la personne.** Le lien
+  d'un anniversaire, dans l'agenda, changeait bien d'onglet mais laissait la
+  liste en tête, sans liseré : il fallait chercher la fiche à la main. Chaque
+  tiroir était posé d'un bloc dans la liste, si bien que les fiches qu'il
+  contient n'existaient pas tant que le tiroir n'était pas à l'écran — la visée
+  portait sur une fiche introuvable et ne faisait rien. Les fiches sont
+  désormais posées une à une : celle qu'on demande est amenée au centre, quel
+  que soit son rang dans l'annuaire. Au passage, une visée interrompue — l'onglet
+  qu'on quitte aussitôt — restait en attente et allumait une fiche au hasard
+  d'un passage suivant.
 - **Changer de lieu ne changeait pas la marée.** Un port de marée épinglé — par
   « Utiliser le port le plus proche » — continuait de servir quel que soit le
   lieu choisi ensuite, alors qu'il avait justement été retenu comme le plus

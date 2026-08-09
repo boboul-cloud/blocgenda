@@ -112,7 +112,13 @@ struct DirectoryView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: [.sectionHeaders]) {
+                    // Les fiches sont posées une à une dans la pile, et non par
+                    // paquets dans un VStack par tiroir : ce paquet ne faisait
+                    // qu'un seul élément aux yeux de la pile paresseuse, qui
+                    // ignorait donc les fiches tant que le tiroir n'était pas à
+                    // l'écran. Viser l'une d'elles depuis l'agenda ne menait
+                    // alors nulle part — l'annuaire s'ouvrait en tête de liste.
+                    LazyVStack(alignment: .leading, spacing: 8, pinnedViews: [.sectionHeaders]) {
                         if visible.isEmpty {
                             // Le tiroir n'est nommé que s'il est seul en cause :
                             // une recherche ou les favoris expliqueraient tout
@@ -125,14 +131,12 @@ struct DirectoryView: View {
                         }
                         ForEach(sections) { group in
                             Section {
-                                VStack(spacing: 8) {
-                                    ForEach(group.contacts) { contact in
-                                        ContactCard(contact: contact,
-                                                    isHighlighted: highlighted == contact.id) {
-                                            editing = contact
-                                        }
-                                        .id(contact.id)
+                                ForEach(group.contacts) { contact in
+                                    ContactCard(contact: contact,
+                                                isHighlighted: highlighted == contact.id) {
+                                        editing = contact
                                     }
+                                    .id(contact.id)
                                 }
                             } header: {
                                 HStack {
@@ -144,7 +148,12 @@ struct DirectoryView: View {
                                         .font(Type.ui(10, weight: .semibold))
                                         .foregroundStyle(Ink.textFaint)
                                 }
-                                .padding(.vertical, 6)
+                                // L'air d'avant se répartit maintenant entre
+                                // l'écart de la pile, resserré pour les fiches,
+                                // et l'en-tête lui-même : le rythme ne change
+                                // pas, et le bandeau épinglé couvre bien les
+                                // fiches qui défilent dessous.
+                                .padding(.vertical, 12)
                                 .padding(.horizontal, 4)
                                 .background(Ink.chassis)
                             }
@@ -280,21 +289,28 @@ struct DirectoryView: View {
         if !query.isEmpty { query = "" }
         if showFavoritesOnly { showFavoritesOnly = false }
         if groupFilter != nil { groupFilter = nil }
-        // Le temps que la liste se remette en place avant de viser.
-        try? await Task.sleep(for: .milliseconds(120))
-        guard !Task.isCancelled else { return }
-        withAnimation(.snappy) {
-            proxy.scrollTo(id, anchor: .center)
-            highlighted = id
-        }
-        // L'extinction ne dépend plus de cette tâche-ci : la remise à zéro de
-        // la demande, juste après, l'interromprait.
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2.5))
-            guard highlighted == id else { return }
-            withAnimation(.easeOut(duration: 0.4)) { highlighted = nil }
-        }
+        // Le liseré n'attend pas la visée : il désigne la fiche dès maintenant,
+        // et sert ensuite de témoin — tant qu'il porte cet identifiant, c'est
+        // que la demande est toujours la nôtre.
+        withAnimation(.snappy) { highlighted = id }
+        // La demande est consommée tout de suite, plutôt qu'au bout du compte :
+        // une visée interrompue — l'onglet qu'on quitte aussitôt — la laissait
+        // en attente, et elle rallumait une fiche au hasard d'un passage
+        // suivant. La suite ne dépend donc plus de cette tâche-ci, que la
+        // remise à zéro interromprait.
         nav.contactToReveal = nil
+        Task { @MainActor in await aim(at: id, with: proxy) }
+    }
+
+    /// Amène la fiche au centre, puis éteint le liseré.
+    private func aim(at id: UUID, with proxy: ScrollViewProxy) async {
+        try? await Task.sleep(for: .milliseconds(240))
+        guard highlighted == id else { return }
+        withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+        try? await Task.sleep(for: .seconds(2.3))
+        // Une demande plus récente a pris la main : celle-ci s'efface.
+        guard highlighted == id else { return }
+        withAnimation(.easeOut(duration: 0.4)) { highlighted = nil }
     }
 
     /// Dit ce qui vient d'entrer dans l'annuaire, puis s'efface.
