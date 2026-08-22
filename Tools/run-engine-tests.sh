@@ -14,5 +14,8 @@ swiftc -O -o "$OUT/enginetests" \
   Sources/Shared/Models/AgendaEvent.swift \
   Sources/Shared/Models/JournalPage.swift \
   Sources/Shared/Engine/JournalLayout.swift \
+  Sources/Shared/Engine/Greetings.swift \
+  Sources/Shared/Data/NameDays.swift \
+  Sources/Shared/Store/SharedStorage.swift \
   Tools/EngineTests/main.swift
 TZ=Europe/Paris "$OUT/enginetests"

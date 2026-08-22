@@ -109,7 +109,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Annuaire") {
+                Section {
                     NavigationLink {
                         ContactGroupsView().environment(store)
                     } label: {
@@ -120,6 +120,21 @@ struct SettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    NavigationLink {
+                        GreetingsView().environment(store)
+                    } label: {
+                        HStack {
+                            Label("Souhaits", systemImage: "gift")
+                            Spacer()
+                            Text(greetingsSummary)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityIdentifier("reglages.souhaits")
+                } header: {
+                    Text("Annuaire")
+                } footer: {
+                    Text("Les souhaits préparent un message pour les anniversaires et les fêtes des fiches, dans les groupes que vous choisissez.")
                 }
 
                 Section("Rouleau") {
@@ -208,6 +223,13 @@ struct SettingsView: View {
             }
         }
         .paperSheet()
+    }
+
+    /// L'état des souhaits, en deux mots, pour n'avoir pas à ouvrir l'écran.
+    private var greetingsSummary: String {
+        guard store.settings.sendsGreetings else { return "Éteints" }
+        let groups = store.settings.greetedGroups.count
+        return groups == 0 ? "Aucun groupe" : "\(groups) groupe\(groups > 1 ? "s" : "")"
     }
 
     private func reschedule() async {

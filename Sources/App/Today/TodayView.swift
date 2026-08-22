@@ -50,8 +50,10 @@ struct TodayView: View {
 
                 EphemerisCard(ephemeris: ephemeris)
 
-                if !store.birthdays(on: now).isEmpty || !store.upcomingBirthdays().isEmpty {
+                if !store.birthdays(on: now).isEmpty || !store.nameDays(on: now).isEmpty
+                    || !store.upcomingBirthdays().isEmpty {
                     BirthdayCard(today: store.birthdays(on: now),
+                                 nameDays: store.nameDays(on: now),
                                  upcoming: store.upcomingBirthdays())
                 }
 

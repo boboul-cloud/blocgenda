@@ -37,6 +37,16 @@ struct Contact: Identifiable, Codable, Hashable, Sendable {
     /// L'anniversaire revient bien tous les ans, mais l'âge reste inconnu.
     static let unknownBirthYear = 1604
 
+    /// Clé de rapprochement des tiroirs : deux noms qui ne diffèrent que par
+    /// la casse, les accents ou les espaces de bordure désignent le même
+    /// tiroir. Tout ce qui range, retrouve ou filtre une fiche suit cette
+    /// règle-là, sans quoi une fiche se classe dans un tiroir que le filtre ne
+    /// sait plus atteindre.
+    static func groupKey(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+    }
+
     /// Les tiroirs offerts d'office. L'utilisateur en ajoute librement
     /// d'autres — voir `Store.contactGroups`.
     static let defaultGroups = ["Général", "Famille", "Travail", "Santé", "Mer", "Maison", "Urgences"]

@@ -181,6 +181,76 @@ check("les étales suivent le décalage",
                  .timeIntervalSince(TideService.extrema(from: brute)[0].date) / 60)),
       "52")
 
+print("\n── Coefficient de marée ──")
+
+// Comparaison aux coefficients officiels du SHOM, tels que les publient les
+// annuaires. On tolère trois points : c'est une estimation astronomique, pas
+// une prédiction harmonique. Voir `TideCoefficient` pour la calibration.
+func coefficient(_ y: Int, _ m: Int, _ d: Int, _ h: Int) -> Int {
+    var utc = Calendar(identifier: .gregorian)
+    utc.timeZone = TimeZone(identifier: "UTC")!
+    return TideCoefficient.value(at: utc.date(from: DateComponents(year: y, month: m, day: d,
+                                                                  hour: h))!)
+}
+func proche(_ label: String, _ got: Int, _ want: Int, _ marge: Int = 3) {
+    let ok = abs(got - want) <= marge
+    if !ok { failures += 1 }
+    print("\(ok ? "✓" : "✗") \(label)  →  \(got)\(ok ? "" : "   (officiel : \(want))")")
+}
+
+// La « marée du siècle » du 21 mars 2015 : coefficient 119, le maximum de
+// l'échelle ou presque — équinoxe, nouvelle lune et périgée le même jour.
+proche("marée du siècle (21 mars 2015)", coefficient(2015, 3, 21, 10), 119)
+proche("la veille (20 mars 2015)", coefficient(2015, 3, 20, 22), 115)
+proche("vive-eau d'équinoxe (29 sept. 2015)", coefficient(2015, 9, 29, 10), 117)
+proche("morte-eau de janvier (13 janv. 2026)", coefficient(2026, 1, 13, 10), 35)
+proche("vive-eau d'août (14 août 2026)", coefficient(2026, 8, 14, 6), 102)
+proche("la marée descend en morte-eau (19 août 2026)", coefficient(2026, 8, 19, 18), 49)
+
+check("l'échelle ne déborde pas",
+      "\(TideCoefficient.bounds.contains(coefficient(2026, 3, 20, 12)))", "true")
+check("au-delà de 95, c'est une grande marée", TideCoefficient.label(for: 102), "grande marée")
+check("70 sépare la vive-eau de la morte-eau",
+      "\(TideCoefficient.label(for: 70))/\(TideCoefficient.label(for: 69))",
+      "vive-eau/morte-eau")
+
+// Le coefficient est une convention française : ailleurs, on n'en affiche pas.
+check("Brest a un coefficient",
+      "\(TideCoefficient.applies(latitude: 48.3833, longitude: -4.4950))", "true")
+check("Dunkerque aussi",
+      "\(TideCoefficient.applies(latitude: 51.0350, longitude: 2.3770))", "true")
+check("Biarritz aussi",
+      "\(TideCoefficient.applies(latitude: 43.4830, longitude: -1.5586))", "true")
+check("Marseille n'en a pas",
+      "\(TideCoefficient.applies(latitude: 43.2965, longitude: 5.3698))", "false")
+check("Fort-de-France non plus",
+      "\(TideCoefficient.applies(latitude: 14.6030, longitude: -61.0740))", "false")
+
+// Un chiffre par pleine mer, comme dans l'annuaire — et rien pour les basses mers.
+var journee = TideDay()
+journee.latitude = 48.3833
+journee.longitude = -4.4950
+let midi = Calendar.current.startOfDay(for: cal.date(from: DateComponents(year: 2026, month: 8,
+                                                                         day: 14))!)
+journee.marks = [
+    TideMark(date: midi.addingTimeInterval(4 * 3600), height: 3.1, isHigh: true),
+    TideMark(date: midi.addingTimeInterval(10 * 3600), height: -3.0, isHigh: false),
+    TideMark(date: midi.addingTimeInterval(16 * 3600), height: 3.2, isHigh: true),
+    TideMark(date: midi.addingTimeInterval(30 * 3600), height: 3.0, isHigh: true)
+]
+check("un coefficient par pleine mer du jour",
+      "\(journee.coefficients(on: midi).count)", "2")
+var ailleurs = journee
+ailleurs.latitude = 43.2965
+ailleurs.longitude = 5.3698
+check("aucun coefficient en Méditerranée",
+      "\(ailleurs.coefficients(on: midi).count)", "0")
+var sansLieu = journee
+sansLieu.latitude = nil
+sansLieu.longitude = nil
+check("aucun coefficient sans lieu connu",
+      "\(sansLieu.coefficients(on: midi).count)", "0")
+
 print("\n── Astronomie (Brest, 7 août 2026) ──")
 let sun = Astro.sunTimes(date: ref, lat: 48.3833, lon: -4.4950)
 let hm: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "fr_FR")
@@ -310,6 +380,85 @@ check("un rendez-vous unique déjà passé n'a plus d'échéance",
 check("le jour même compte pour une échéance",
       theme("Véhicule").nextStart(from: jourRef).map { df.string(from: $0) } ?? "nil",
       "07/08 09:00")
+
+print("\n── Souhaits du jour ──")
+
+func jour(_ m: Int, _ d: Int) -> Date {
+    cal.date(from: DateComponents(year: 2026, month: m, day: d))!
+}
+
+check("les prénoms du 29 juin", NameDays.names(on: jour(6, 29)).joined(separator: " · "),
+      "Pierre · Paul · Perrine")
+check("un jour férié n'efface pas le prénom fêté",
+      NameDays.names(on: jour(7, 14)).joined(separator: " · "), "Camille")
+check("la casse et les accents n'entrent pas en ligne de compte",
+      "\(NameDays.celebrates(firstName: "remy", on: jour(1, 15)))", "true")
+check("un prénom composé est fêté avec chacune de ses parties",
+      "\(NameDays.celebrates(firstName: "Jean-Pierre", on: jour(6, 24)))"
+      + " \(NameDays.celebrates(firstName: "Jean-Pierre", on: jour(6, 29)))", "true true")
+check("mais pas n'importe quel jour",
+      "\(NameDays.celebrates(firstName: "Jean-Pierre", on: jour(6, 25)))", "false")
+check("une variante compte comme le prénom principal",
+      "\(NameDays.celebrates(firstName: "José", on: jour(3, 19)))", "true")
+
+// Les souhaits ne concernent que les tiroirs cochés : c'est toute la règle.
+var reglages = AppSettings()
+reglages.greetingsEnabled = true
+reglages.greetingGroups = ["Famille"]
+
+var pierre = Contact(firstName: "Pierre", lastName: "Kerdraon", phone: "06 11 22 33 44")
+pierre.group = "Famille"
+pierre.birthday = cal.date(from: DateComponents(year: 1990, month: 6, day: 29))
+var garagiste = Contact(firstName: "Paul", lastName: "Morvan", phone: "06 55 66 77 88")
+garagiste.group = "Travail"
+var sansNumero = Contact(firstName: "Perrine", lastName: "Guéguen")
+sansNumero.group = "Famille"
+
+let carnet = [pierre, garagiste, sansNumero]
+
+func souhaits(_ s: AppSettings, _ m: Int = 6, _ d: Int = 29) -> [Greeting] {
+    Greetings.list(on: jour(m, d), contacts: carnet, settings: s, drawing: false)
+}
+
+check("seuls les groupes cochés sont fêtés",
+      souhaits(reglages).map(\.name).joined(separator: ", "),
+      "Perrine Guéguen, Pierre Kerdraon")
+check("anniversaire et fête le même jour se cumulent",
+      souhaits(reglages).first { $0.firstName == "Pierre" }?.occasion.label ?? "—",
+      "Anniversaire et fête")
+check("la fête seule reste une fête",
+      souhaits(reglages).first { $0.firstName == "Perrine" }?.occasion.label ?? "—",
+      "Fête")
+check("sans numéro, rien ne part",
+      "\(souhaits(reglages).first { $0.firstName == "Perrine" }?.canSend ?? true)", "false")
+
+var sansFetes = reglages
+sansFetes.greetingsIncludeNameDays = false
+check("les fêtes se coupent sans toucher aux anniversaires",
+      souhaits(sansFetes).map { "\($0.firstName) \($0.occasion.label)" }.joined(separator: ", "),
+      "Pierre Anniversaire")
+
+var tousGroupes = reglages
+tousGroupes.greetingGroups = ["Famille", "Travail"]
+check("un tiroir de plus, une personne de plus",
+      souhaits(tousGroupes).map(\.firstName).joined(separator: ", "),
+      "Paul, Perrine, Pierre")
+
+var aucunGroupe = reglages
+aucunGroupe.greetingGroups = []
+check("aucun tiroir coché, personne à fêter", "\(souhaits(aucunGroupe).count)", "0")
+
+check("le prénom et l'âge prennent leur place dans la formule",
+      Greetings.fill("{prenom} fête ses {age} ans !", for: pierre, on: jour(6, 29)),
+      "Pierre fête ses 36 ans !")
+check("l'âge inconnu ne laisse pas de trou visible",
+      Greetings.fill("Bonne fête {prenom} !", for: sansNumero), "Bonne fête Perrine !")
+check("les formules d'origine servent tant qu'on n'en écrit pas",
+      "\(Greetings.formulas(for: .nameDay, settings: reglages) == Greetings.nameDayDefaults)", "true")
+var videes = reglages
+videes.greetingFormulas = ["nameDay": ["   "]]
+check("une réserve vidée à la main ne donne pas un message vide",
+      "\(Greetings.formulas(for: .nameDay, settings: videes) == Greetings.nameDayDefaults)", "true")
 
 print("\n\(failures == 0 ? "Tout est vert." : "\(failures) échec(s).")")
 exit(failures == 0 ? 0 : 1)

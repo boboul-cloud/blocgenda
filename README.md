@@ -104,14 +104,19 @@ de retirer une ligne.
 - **Course du soleil** : un arc où le disque avance en temps réel ; lever,
   coucher, durée du jour et l'écart avec la veille (« +3 min qu'hier »).
 - **Marée** : la courbe des 24 heures, les pleines et basses mers avec leur
-  hauteur, le sens de la marée en cours, le marnage, vive-eau / morte-eau.
+  hauteur, le sens de la marée en cours, le marnage, et le **coefficient** —
+  un chiffre par pleine mer, sur l'échelle 20–120, avec ce qu'il vaut en toutes
+  lettres : morte-eau, vive-eau, grande marée.
   Si vous n'êtes pas sur la côte, l'application bascule d'elle-même sur le port
   de référence le plus proche et le dit.
 - **Lune** : phase dessinée, éclairement, âge, lever et coucher, prochaines
   pleine et nouvelle lunes.
 - **Éphéméride** : saint du jour, dicton, jour n° X de l'année, semaine,
-  jours restants, jours fériés (Pâques comprise, calculée), et « ce jour-là ».
-- **Anniversaires** tirés de l'annuaire, avec l'âge et le bouton d'appel.
+  jours restants, jours fériés (Pâques comprise, calculée), « ce jour-là », et
+  les autres prénoms fêtés — ceux qu'un jour férié efface du titre : le
+  14 juillet, c'est Camille.
+- **Anniversaires et fêtes** tirés de l'annuaire, avec l'âge et le bouton
+  d'appel pour les anniversaires, et les fiches dont c'est la fête du prénom.
 - **Lumière** : heure dorée du matin et du soir, heure bleue, nuit noire —
   le créneau des photographes, avec un repère « en cours ».
 - **Activité (pêche & nature)** : périodes solunaires majeures et mineures,
@@ -160,6 +165,28 @@ défaut sur le courriel, à défaut sur le nom. C'est une **recopie unique**, pa
 une synchronisation : les contacts du téléphone ne sont jamais modifiés, et une
 fiche importée vit ensuite sa vie dans l'annuaire.
 
+**Souhaits d'anniversaire et de fête** (*Réglages ▸ Annuaire ▸ Souhaits*) :
+Blocgenda rapproche chaque jour les fiches de l'annuaire du calendrier des
+postes — la date de naissance pour l'anniversaire, le prénom pour la fête, les
+variantes et les prénoms composés compris — et prépare un message pour chacun.
+Une formule est tirée d'une réserve que l'on modifie librement (`{prenom}` et
+`{age}` sont remplacés), en évitant celle servie la fois précédente à la même
+personne.
+
+Deux règles tiennent le tout :
+
+- **rien ne concerne le carnet d'adresses du téléphone** : seules les fiches de
+  l'annuaire de Blocgenda sont fêtées ;
+- **seuls les groupes cochés** sont concernés — la famille et les amis, pas le
+  garagiste. Aucun groupe coché, rien n'est préparé.
+
+L'envoi se fait d'un bouton, qui ouvre Messages avec le destinataire et le texte
+déjà écrits. Pour que cela parte sans y penser, l'action **« Salutations du
+jour »** est exposée à Raccourcis : une automatisation « Heure de la journée »
+la répète chaque matin et envoie les messages. Le mode d'emploi est dans
+l'écran *Souhaits*. Une personne n'est rendue au raccourci qu'une fois par jour,
+même si l'automatisation se déclenche deux fois.
+
 ---
 
 ## Widgets et notifications
@@ -184,6 +211,10 @@ fiche importée vit ensuite sa vie dans l'annuaire.
 **Liens profonds** : `blocgenda://rouleau`, `blocgenda://jour`,
 `blocgenda://agenda`, `blocgenda://annuaire`, `blocgenda://reglages` —
 utilisables depuis Raccourcis.
+
+**Actions pour Raccourcis** : *Salutations du jour* — les personnes de
+l'annuaire à féliciter aujourd'hui, avec leur numéro et un message prêt à
+envoyer (voir *Annuaire*).
 
 ---
 
@@ -330,14 +361,26 @@ pour une éphéméride.
 
 - Les hauteurs de marée sont données **par rapport au niveau moyen de la mer**,
   d'après un modèle de prévision. C'est bon pour organiser sa journée ; **pour
-  naviguer, utilisez l'annuaire officiel des marées (SHOM)**. L'indication
-  vive-eau / morte-eau est déduite de la phase de la lune, ce n'est pas le
-  coefficient officiel.
+  naviguer, utilisez l'annuaire officiel des marées (SHOM)**.
+- Le **coefficient** est calculé sur l'appareil d'après les positions du soleil
+  et de la lune, puis calé sur les coefficients officiels du SHOM (2015, 2024,
+  2025, 2026 — 1 461 jours) : écart type 1,5 point, 96 % des journées à moins de
+  trois points, jamais plus de six. Ce n'est pas le coefficient officiel. Il ne
+  s'affiche que sur la façade Manche–Atlantique, seule côte où cette échelle
+  française a cours ; ailleurs, la fiche s'en tient à la vive-eau lue sur la
+  lune.
 - La couverture marine d'Open-Meteo s'arrête au large des côtes : à l'intérieur
   des terres, l'application propose le port de référence le plus proche parmi
   les vingt-cinq embarqués (métropole et outre-mer).
 - La répétition mensuelle se cale sur le quantième : un événement du 31 ne tombe
   pas dans les mois courts.
+- **Aucune application iOS n'a le droit d'envoyer un SMS toute seule.**
+  Blocgenda prépare les souhaits ; c'est Raccourcis qui les envoie, et
+  l'automatisation ne part que si l'iPhone est allumé à l'heure dite — une
+  matinée manquée ne se rattrape pas.
+- Le calendrier des prénoms fêtés est celui « des postes », avec des variantes
+  ajoutées à la main : la liste est forcément incomplète, et se complète au fil
+  des prénoms manqués.
 - iOS plafonne les notifications locales en attente à 64 ; Blocgenda en
   programme au plus 56 pour les rendez-vous, sur trois semaines glissantes, et
   reconstruit la file à chaque modification.

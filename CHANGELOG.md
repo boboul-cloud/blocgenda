@@ -5,6 +5,50 @@ numérotation [SemVer](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Souhaits d'anniversaire et de fête.** Blocgenda rapproche chaque jour les
+  fiches de l'annuaire du calendrier des postes — la date de naissance pour
+  l'anniversaire, le prénom pour la fête — et prépare un message pour chacun.
+  La comparaison des prénoms ignore la casse et les accents, accepte les
+  variantes (« Rémi », « Rémy ») et fête un prénom composé avec chacune de ses
+  parties. Deux règles la bordent : **seules les fiches de l'annuaire** sont
+  concernées, jamais le carnet d'adresses du téléphone, et **seuls les groupes
+  cochés** en réglages — aucun groupe coché, rien n'est préparé. La formule est
+  tirée d'une réserve modifiable (`{prenom}` et `{age}` sont remplacés), en
+  évitant celle servie la fois précédente à la même personne. L'envoi se fait
+  d'un bouton, qui ouvre Messages avec le destinataire et le texte déjà écrits ;
+  pour qu'il parte sans y penser, l'action **« Salutations du jour »** est
+  exposée à Raccourcis, avec son mode d'emploi dans *Réglages ▸ Annuaire ▸
+  Souhaits*. Une personne n'est rendue qu'une fois par jour, même si
+  l'automatisation se déclenche deux fois. Tout se fait sur l'appareil : aucune
+  application iOS n'ayant le droit d'envoyer un SMS d'elle-même, Blocgenda
+  prépare, et c'est Raccourcis qui envoie.
+- **Les fêtes du prénom dans l'écran *Le jour*.** La carte des anniversaires
+  accueille les fiches dont c'est la fête, et l'éphéméride nomme les prénoms
+  fêtés que son titre passe sous silence — le 14 juillet, c'est Camille.
+
+- **Coefficient de marée.** La fiche *Marée* de l'écran *Le jour* porte
+  désormais le coefficient, sur l'échelle française de 20 à 120 — un chiffre par
+  pleine mer, comme dans un annuaire — et dit en toutes lettres ce qu'il vaut :
+  morte-eau, vive-eau, grande marée. Il est calculé sur l'appareil, sans réseau,
+  d'après les positions du soleil et de la lune : distance et déclinaison de
+  chaque astre, écart entre les deux, et le retard d'un jour et demi que l'océan
+  met à répondre. Les deux constantes de ce calcul ont été ajustées sur les
+  coefficients officiels du SHOM de 2015, 2024, 2025 et 2026 — mille quatre cent
+  soixante et un jours : l'écart type est de **1,5 point**, 96 % des journées
+  tombent à moins de trois points, aucune au-delà de six. Cela reste une
+  estimation ; pour naviguer, l'annuaire officiel fait foi.
+
+### Modifié
+
+- L'indication **vive-eau / morte-eau** se lit maintenant sur le coefficient là
+  où il y en a un, et non plus sur la seule phase de la lune : la carte ne peut
+  plus annoncer « morte-eau » à côté d'un coefficient de 95.
+- Le coefficient est une convention française : il ne s'affiche que sur la
+  façade **Manche–Atlantique**, où il a cours. En Méditerranée et outre-mer, la
+  fiche s'en tient à la vive-eau lue sur la lune, comme avant.
+
 ## [1.1] - 2026-08-09
 
 ### Ajouté

@@ -29,8 +29,19 @@ struct TideCard: View {
         tide?.marks.first { $0.date > now }
     }
 
-    /// Vive-eau ou morte-eau, d'après la position de la lune.
+    /// Les coefficients du jour, un par pleine mer. Vide hors de la façade
+    /// Manche–Atlantique, où le coefficient n'a pas cours.
+    private var coefficients: [Int] {
+        tide?.coefficients(on: now) ?? []
+    }
+
+    /// Vive-eau ou morte-eau. Le coefficient le dit mieux que la lune : là où
+    /// on en a un, c'est lui qui parle, sans quoi la carte pourrait annoncer
+    /// « morte-eau » à côté d'un coefficient de 95.
     private var springNeapLabel: String? {
+        if let strongest = coefficients.max() {
+            return TideCoefficient.label(for: strongest)
+        }
         guard let moon else { return nil }
         let d = min(min(moon.phase, abs(moon.phase - 0.5)), abs(moon.phase - 1))
         switch d {
@@ -73,6 +84,7 @@ struct TideCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     headline
+                    if !coefficients.isEmpty { coefficientRow }
                     chart.frame(height: 110)
                     marksRow
                     footer
@@ -92,11 +104,16 @@ struct TideCard: View {
     /// rattrapé du tout. Le dire vaut mieux que laisser croire à l'exactitude.
     private var provenance: String {
         let base = "Hauteurs par rapport au niveau moyen de la mer (modèle Open-Meteo). "
-        guard let minutes = tide?.phaseCorrectionMinutes, let station = tide?.phaseCorrectionStation
-        else {
-            return base + "Heures non recalées pour ce lieu : elles peuvent avancer d’une demi-heure ou plus. Pour naviguer, référez-vous à l’annuaire officiel des marées."
+        let calibration: String
+        if let minutes = tide?.phaseCorrectionMinutes, let station = tide?.phaseCorrectionStation {
+            calibration = "Heures recalées de \(minutes) min sur l’annuaire officiel (référence \(station)) ; il subsiste quelques minutes d’écart. "
+        } else {
+            calibration = "Heures non recalées pour ce lieu : elles peuvent avancer d’une demi-heure ou plus. "
         }
-        return base + "Heures recalées de \(minutes) min sur l’annuaire officiel (référence \(station)) ; il subsiste quelques minutes d’écart. Pour naviguer, référez-vous à l’annuaire officiel des marées."
+        let coefficient = coefficients.isEmpty ? ""
+            : "Coefficient calculé d’après la lune et le soleil, à deux ou trois points près du coefficient officiel. "
+        return base + calibration + coefficient
+            + "Pour naviguer, référez-vous à l’annuaire officiel des marées."
     }
 
     private var headline: some View {
@@ -125,6 +142,46 @@ struct TideCard: View {
                     }
                 }
             }
+        }
+    }
+
+    /// Le coefficient, présenté comme dans un annuaire : un chiffre par pleine
+    /// mer, du matin puis du soir, et ce qu'il vaut en toutes lettres.
+    private var coefficientRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("COEFFICIENT")
+                .font(Type.micro)
+                .tracking(0.8)
+                .foregroundStyle(Ink.textFaint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(coefficients.map(String.init).joined(separator: " · "))
+                .font(Type.tape(17, weight: .bold))
+                .foregroundStyle(coefficientColor)
+                .fixedSize()
+                .accessibilityIdentifier("maree.coefficient")
+            Spacer(minLength: 6)
+            // En toutes lettres, sans pastille : le chiffre porte déjà la
+            // couleur, et une capsule de plus passait à la ligne dès que la
+            // marée était grande.
+            if let springNeapLabel {
+                Text(springNeapLabel)
+                    .font(Type.ui(11.5, weight: .semibold))
+                    .foregroundStyle(coefficientColor)
+                    .fixedSize()
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Ink.sunken))
+    }
+
+    /// Une grande marée mérite qu'on la remarque ; une morte-eau non.
+    private var coefficientColor: Color {
+        switch coefficients.max() ?? 0 {
+        case 95...: return Ink.amberDeep
+        case 70...: return Ink.sea
+        default: return Ink.textSoft
         }
     }
 
@@ -207,8 +264,11 @@ struct TideCard: View {
                 // couverture, port de marée choisi à la main — le dire, sinon
                 // on croit l'application figée sur de vieilles heures.
                 Pill(text: port == placeName ? port : "marée : \(port)", color: Ink.sea)
+                    .accessibilityIdentifier("maree.port")
             }
-            if let springNeapLabel {
+            // Sans coefficient, c'est ici que se dit la vive-eau ; avec, elle
+            // est déjà lue plus haut, à côté du chiffre.
+            if coefficients.isEmpty, let springNeapLabel {
                 Pill(text: springNeapLabel, color: Ink.violet)
             }
             Spacer(minLength: 0)

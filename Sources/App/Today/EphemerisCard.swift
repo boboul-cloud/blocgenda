@@ -5,6 +5,13 @@ import SwiftUI
 struct EphemerisCard: View {
     let ephemeris: Ephemeris
 
+    /// Les prénoms du jour que le titre ne dit pas : les variantes, et ceux
+    /// qu'un jour férié efface de l'éphéméride — le 14 juillet, c'est Camille.
+    private var alsoCelebrated: [String] {
+        let shown = NameDays.fold(ephemeris.saint)
+        return NameDays.names(on: ephemeris.date).filter { NameDays.fold($0) != shown }
+    }
+
     private var yearProgress: Double {
         let total = Double(ephemeris.dayOfYear + ephemeris.daysRemaining)
         return total > 0 ? Double(ephemeris.dayOfYear) / total : 0
@@ -13,14 +20,22 @@ struct EphemerisCard: View {
     var body: some View {
         ChassisCard(title: "Éphéméride", systemImage: "book.closed.fill", accent: Ink.amberDeep) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(ephemeris.saint)
-                        .font(Type.ui(18, weight: .bold))
-                        .foregroundStyle(Ink.text)
-                    if let holiday = ephemeris.holidayName {
-                        Pill(text: holiday, color: Ink.rouge, filled: true)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(ephemeris.saint)
+                            .font(Type.ui(18, weight: .bold))
+                            .foregroundStyle(Ink.text)
+                        if let holiday = ephemeris.holidayName {
+                            Pill(text: holiday, color: Ink.rouge, filled: true)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
+                    if !alsoCelebrated.isEmpty {
+                        Text("on fête aussi \(alsoCelebrated.joined(separator: " · "))")
+                            .font(Type.ui(11.5))
+                            .foregroundStyle(Ink.textFaint)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
@@ -88,13 +103,20 @@ struct YearBar: View {
     }
 }
 
-/// Les anniversaires tirés de l'annuaire — l'autre visage de l'éphéméride.
+/// Les anniversaires et les fêtes tirés de l'annuaire — l'autre visage de
+/// l'éphéméride : le calendrier des postes, mais avec des visages connus.
 struct BirthdayCard: View {
     let today: [Contact]
+    /// Les fiches dont c'est la fête du prénom aujourd'hui.
+    var nameDays: [Contact] = []
     let upcoming: [(contact: Contact, date: Date)]
 
+    private var title: String {
+        nameDays.isEmpty ? "Anniversaires" : "Anniversaires et fêtes"
+    }
+
     var body: some View {
-        ChassisCard(title: "Anniversaires", systemImage: "gift.fill", accent: Ink.rouge) {
+        ChassisCard(title: title, systemImage: "gift.fill", accent: Ink.rouge) {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(today) { contact in
                     HStack(spacing: 10) {
@@ -118,6 +140,25 @@ struct BirthdayCard: View {
                                     .frame(width: Type.control(30), height: Type.control(30))
                                     .background(Circle().fill(Ink.moss.opacity(0.15)))
                             }
+                        }
+                    }
+                }
+
+                let celebrating = nameDays.filter { !today.contains($0) }
+                if !celebrating.isEmpty {
+                    if !today.isEmpty { Divider().overlay(Ink.chassisLine) }
+                    ForEach(celebrating) { contact in
+                        HStack(spacing: 10) {
+                            Avatar(contact: contact, size: 30)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(contact.fullName)
+                                    .font(Type.ui(13, weight: .semibold))
+                                    .foregroundStyle(Ink.text)
+                                Text("bonne fête")
+                                    .font(Type.ui(11))
+                                    .foregroundStyle(Ink.sea)
+                            }
+                            Spacer(minLength: 0)
                         }
                     }
                 }

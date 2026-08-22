@@ -322,14 +322,10 @@ final class Store {
 
     // MARK: - Annuaire
 
-    /// Clé de rapprochement des tiroirs : deux noms qui ne diffèrent que par la
-    /// casse, les accents ou les espaces de bordure désignent le même tiroir.
-    /// C'est la règle appliquée à la création (`addContactGroup`) ; tout ce qui
-    /// range ou retrouve une fiche doit suivre la même, sans quoi une fiche se
-    /// classe dans un tiroir que le filtre ne sait plus atteindre.
+    /// Clé de rapprochement des tiroirs — voir `Contact.groupKey`, qui porte la
+    /// règle : le moteur des souhaits la suit aussi, sans passer par le Store.
     nonisolated static func contactGroupKey(_ name: String) -> String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
-            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+        Contact.groupKey(name)
     }
 
     /// Tous les tiroirs de l'annuaire : ceux offerts d'office, ceux créés à la
@@ -469,6 +465,22 @@ final class Store {
 
     func birthdays(on day: Date) -> [Contact] {
         contacts.filter { $0.hasBirthday(on: day) }
+    }
+
+    /// Les fiches dont c'est la fête : le prénom tombe au calendrier ce
+    /// jour-là. Indépendant des réglages d'envoi — c'est une information du
+    /// jour, comme le saint de l'éphéméride.
+    func nameDays(on day: Date) -> [Contact] {
+        contacts.filter {
+            !$0.firstName.isEmpty && NameDays.celebrates(firstName: $0.firstName, on: day)
+        }
+    }
+
+    /// Les souhaits préparés pour un jour donné, dans les tiroirs cochés.
+    /// L'aperçu ne tire rien au sort : voir `Greetings.list`.
+    func greetings(on day: Date = Date(), respectGroups: Bool = true) -> [Greeting] {
+        Greetings.list(on: day, contacts: contacts, settings: settings,
+                       drawing: false, respectGroups: respectGroups)
     }
 
     /// Les anniversaires des trente prochains jours, dans l'ordre.

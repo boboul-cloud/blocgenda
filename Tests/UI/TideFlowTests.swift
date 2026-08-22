@@ -24,18 +24,24 @@ final class TideFlowTests: XCTestCase {
                       "La fiche Marée n'arrive pas — réseau ?")
     }
 
-    /// Ce que la fiche Marée annonce : le port, puis les heures d'étale.
-    private func ficheMaree() -> (port: String?, heures: [String]) {
+    /// Ce que la fiche Marée annonce : le port, le coefficient, les heures
+    /// d'étale. Le port et le coefficient se nomment eux-mêmes — les repérer à
+    /// leur rang dans la fiche cassait au premier remaniement de la carte.
+    private func ficheMaree() -> (port: String?, coefficients: [Int], heures: [String]) {
         let textes = app.staticTexts.allElementsBoundByIndex.map(\.label)
-        guard let i = textes.firstIndex(of: "MARÉE") else { return (nil, []) }
-        let bloc = Array(textes[i..<min(i + 16, textes.count)])
+        guard let i = textes.firstIndex(of: "MARÉE") else { return (nil, [], []) }
+        let bloc = Array(textes[i..<min(i + 18, textes.count)])
         let heures = bloc.filter { $0.count == 5 && $0.contains("h") && Int($0.prefix(2)) != nil }
-        // La pastille du port précède immédiatement celle de la vive-eau.
-        let etats = ["vive-eau", "marée moyenne", "morte-eau"]
-        let port = bloc.firstIndex { etats.contains($0) }.flatMap { i in
-            i > 0 ? bloc[i - 1] : nil
-        }
-        return (port, heures)
+
+        let pastille = app.staticTexts["maree.port"]
+        let port = pastille.exists
+            ? pastille.label.replacingOccurrences(of: "marée : ", with: "")
+            : nil
+        let ligne = app.staticTexts["maree.coefficient"]
+        let coefficients = ligne.exists
+            ? ligne.label.components(separatedBy: " · ").compactMap { Int($0) }
+            : []
+        return (port, coefficients, heures)
     }
 
     private func pastilleDuLieu() -> XCUIElement? {
@@ -49,6 +55,25 @@ final class TideFlowTests: XCTestCase {
     private func allerA(_ nom: String) {
         guard let pastille = pastilleDuLieu() else { return XCTFail("Pastille du lieu introuvable.") }
         pastille.tap()
+        let lignes = app.buttons.matching(NSPredicate(format: "label == %@", nom))
+        XCTAssertTrue(lignes.firstMatch.waitForExistence(timeout: 10),
+                      "Le port \(nom) n'est pas proposé.")
+        let cible = lignes.allElementsBoundByIndex
+            .filter { $0.frame.minY > 150 }
+            .min { $0.frame.minY < $1.frame.minY } ?? lignes.firstMatch
+        cible.tap()
+        sleep(14)   // le relevé passe par le réseau
+    }
+
+    /// Le même choix, en cherchant : la liste des ports est longue, et ceux du
+    /// bas ne sont pas à l'écran tant qu'on ne l'a pas fait défiler.
+    private func chercherEtAllerA(_ nom: String) {
+        guard let pastille = pastilleDuLieu() else { return XCTFail("Pastille du lieu introuvable.") }
+        pastille.tap()
+        let champ = app.searchFields.firstMatch
+        XCTAssertTrue(champ.waitForExistence(timeout: 10), "Le champ de recherche est introuvable.")
+        champ.tap()
+        champ.typeText(nom)
         let lignes = app.buttons.matching(NSPredicate(format: "label == %@", nom))
         XCTAssertTrue(lignes.firstMatch.waitForExistence(timeout: 10),
                       "Le port \(nom) n'est pas proposé.")
@@ -103,5 +128,27 @@ final class TideFlowTests: XCTestCase {
                           "Le port épinglé fige la marée : elle est restée à \(avant.heures).")
         XCTAssertEqual(apres.port, "Saint-Malo",
                        "La fiche annonce encore « \(apres.port ?? "—") ».")
+    }
+
+    /// Sur la façade Manche–Atlantique, la fiche porte le coefficient du jour :
+    /// un chiffre par pleine mer, dans les bornes de l'échelle française.
+    func testLeCoefficientDuJourEstAffiche() throws {
+        ouvrirLeJour()
+
+        allerA("Brest")
+        let brest = ficheMaree()
+        XCTAssertFalse(brest.coefficients.isEmpty, "Aucun coefficient de marée à Brest.")
+        for coefficient in brest.coefficients {
+            XCTAssertTrue((20...120).contains(coefficient),
+                          "Coefficient hors de l'échelle : \(coefficient).")
+        }
+
+        // En Méditerranée, le coefficient n'a pas cours : la fiche n'en donne
+        // aucun plutôt qu'un chiffre qui ne voudrait rien dire. Les heures, si.
+        chercherEtAllerA("Marseille")
+        let marseille = ficheMaree()
+        XCTAssertFalse(marseille.heures.isEmpty, "Aucune heure de marée pour Marseille.")
+        XCTAssertTrue(marseille.coefficients.isEmpty,
+                      "Un coefficient s'affiche en Méditerranée : \(marseille.coefficients).")
     }
 }
