@@ -184,7 +184,9 @@ L'envoi se fait d'un bouton, qui ouvre Messages avec le destinataire et le texte
 déjà écrits. Pour que cela parte sans y penser, l'action **« Salutations du
 jour »** est exposée à Raccourcis : une automatisation « Heure de la journée »
 la répète chaque matin et envoie les messages. Le mode d'emploi est dans
-l'écran *Souhaits*. Une personne n'est rendue au raccourci qu'une fois par jour,
+l'écran *Souhaits* — avec le réglage qu'on oublie toujours : dans l'action
+*Envoyer un message*, éteindre **Afficher lors de l'exécution**, sans quoi
+Messages s'ouvre et attend un appui. Une personne n'est rendue au raccourci qu'une fois par jour,
 même si l'automatisation se déclenche deux fois.
 
 ---
