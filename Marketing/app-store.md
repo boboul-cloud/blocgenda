@@ -1,4 +1,4 @@
-# Fiche App Store — Blocgenda 1.3
+# Fiche App Store — Blocgenda 1.1 (4)
 
 Textes prêts à coller dans App Store Connect. Les limites de caractères indiquées
 sont celles d'Apple ; les compteurs ont été vérifiés.
@@ -71,7 +71,7 @@ CHAQUE JOUR, CE QUE LA JOURNÉE A D'OBJECTIF
   quand vous n'êtes pas sur la côte
 • La lune : phase dessinée, éclairement, âge, lever et coucher
 • L'éphéméride : saint du jour, dicton, jours fériés, « ce jour-là »
-• Les anniversaires de votre annuaire
+• Les anniversaires et les fêtes de votre annuaire
 • L'heure dorée et l'heure bleue, pour les photographes
 • Les périodes de pêche, calculées d'après la lune
 • La météo : température, vent, force Beaufort
@@ -81,6 +81,14 @@ L'AGENDA ET L'ANNUAIRE
 Une bande des sept jours, des récurrences, plusieurs rappels par rendez-vous.
 Un annuaire de vos numéros utiles, groupés, avec appel, SMS, courriel et plan à
 portée de pouce — et les anniversaires qui remontent dans l'éphéméride.
+
+LES SOUHAITS D'ANNIVERSAIRE ET DE FÊTE
+
+Blocgenda rapproche chaque jour vos fiches du calendrier des postes et prépare
+un message pour chacun, dans les seuls groupes que vous cochez. Un bouton
+l'ouvre dans Messages, prêt à partir ; ou bien vous montez une automatisation
+de Raccourcis, et vous n'y pensez plus. Les formules sont les vôtres, et rien
+ne touche au carnet d'adresses du téléphone.
 
 WIDGETS ET NOTIFICATIONS
 
@@ -121,19 +129,26 @@ Apple les indexe déjà.)*
 ## Nouveautés de cette version
 
 ```
-• Un bouton de dictée dans la barre de saisie : on parle, la ligne s'écrit, et
-  le clavier ne monte jamais.
-• On peut maintenant écrire directement depuis l'agenda : la barre unique y
-  ajoute au jour que vous avez sélectionné.
-• Portsall, Le Conquet et l'Aber-Wrac'h rejoignent les ports de référence.
-• Toute la typographie a été agrandie, et l'app suit désormais le réglage
-  « Taille du texte » d'iOS.
-• Correction : une étale de marée pouvait s'afficher deux fois, et le marnage
-  annoncé ne portait pas sur la journée montrée.
-• L'agenda ne montre plus que les notes et les actions ; les calculs restent
-  sur le rouleau.
-• Les étiquettes sont enfin visibles : une rangée les propose sous la barre de
-  saisie, et les toucher sur le rouleau filtre la bande.
+• Les souhaits d'anniversaire et de fête. Blocgenda rapproche chaque jour les
+  fiches de votre annuaire du calendrier des postes — la date de naissance pour
+  l'anniversaire, le prénom pour la fête — et prépare un message pour chacun.
+  Un bouton l'ouvre dans Messages, destinataire et texte déjà écrits.
+• Vous choisissez qui est concerné : les groupes de l'annuaire que vous cochez,
+  la famille et les amis plutôt que le garagiste. Aucun groupe coché, rien n'est
+  préparé.
+• Vous choisissez aussi les mots. Chaque occasion a sa réserve de formules, que
+  l'on réécrit à sa main ; Blocgenda en tire une au hasard, en évitant celle
+  servie l'an dernier à la même personne.
+• Pour que cela parte sans y penser, l'action « Salutations du jour » s'ajoute à
+  Raccourcis : une automatisation quotidienne envoie les messages à l'heure que
+  vous fixez. Le mode d'emploi tient en cinq étapes, dans Réglages ▸ Annuaire ▸
+  Souhaits.
+• L'écran « Le jour » annonce désormais les fêtes du prénom de vos fiches, et
+  l'éphéméride nomme les prénoms fêtés que les jours fériés éclipsent — le
+  14 juillet, c'est Camille.
+• La fiche Marée porte le coefficient, sur l'échelle française de 20 à 120, avec
+  ce qu'il vaut en toutes lettres : morte-eau, vive-eau, grande marée. Il est
+  calculé sur l'appareil, sans réseau.
 ```
 
 ---
