@@ -182,11 +182,12 @@ Deux règles tiennent le tout :
 
 L'envoi se fait d'un bouton, qui ouvre Messages avec le destinataire et le texte
 déjà écrits. Pour que cela parte sans y penser, l'action **« Salutations du
-jour »** est exposée à Raccourcis : une automatisation « Heure de la journée »
-la répète chaque matin et envoie les messages. Le mode d'emploi est dans
-l'écran *Souhaits* — avec le réglage qu'on oublie toujours : dans l'action
-*Envoyer un message*, éteindre **Afficher lors de l'exécution**, sans quoi
-Messages s'ouvre et attend un appui. Une personne n'est rendue au raccourci qu'une fois par jour,
+jour »** est exposée à Raccourcis. L'écran *Souhaits ▸ Envoyer sans y penser*
+installe le raccourci tout monté — variables placées, envoi dans la boucle,
+feuille de composition éteinte — d'un seul bouton ; ne reste que
+l'automatisation « Heure de la journée », trois gestes, qu'aucune application
+n'a le droit de créer à votre place. Le montage à la main reste décrit, en
+images, pour qui en aurait besoin. Une personne n'est rendue au raccourci qu'une fois par jour,
 même si l'automatisation se déclenche deux fois.
 
 ---

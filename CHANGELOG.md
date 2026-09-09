@@ -3,7 +3,7 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [1.2] - 2026-09-09
 
 ### Ajouté
 
@@ -19,8 +19,10 @@ numérotation [SemVer](https://semver.org/lang/fr/).
   évitant celle servie la fois précédente à la même personne. L'envoi se fait
   d'un bouton, qui ouvre Messages avec le destinataire et le texte déjà écrits ;
   pour qu'il parte sans y penser, l'action **« Salutations du jour »** est
-  exposée à Raccourcis, avec son mode d'emploi dans *Réglages ▸ Annuaire ▸
-  Souhaits*. Une personne n'est rendue qu'une fois par jour, même si
+  exposée à Raccourcis. Le mode d'emploi, dans *Réglages ▸ Annuaire ▸ Souhaits*,
+  **installe le raccourci tout monté d'un seul bouton** et dessine, écran par
+  écran, les trois gestes de l'automatisation — la seule chose qu'iOS interdit à
+  une application de faire à la place de son utilisateur. Une personne n'est rendue qu'une fois par jour, même si
   l'automatisation se déclenche deux fois. Tout se fait sur l'appareil : aucune
   application iOS n'ayant le droit d'envoyer un SMS d'elle-même, Blocgenda
   prépare, et c'est Raccourcis qui envoie.

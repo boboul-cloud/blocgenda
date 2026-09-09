@@ -187,21 +187,11 @@ struct GreetingsView: View {
     @ViewBuilder
     private var automation: some View {
         Section {
-            DisclosureGroup("Envoyer sans y penser") {
-                VStack(alignment: .leading, spacing: 10) {
-                    Step(1, "Raccourcis ▸ +, nommez-le « Souhaits du jour ».")
-                    Step(2, "Ajoutez l’action « Salutations du jour » (elle apparaît sous Blocgenda), en laissant « Ne pas renvoyer deux fois le même jour » sur Oui.")
-                    Step(3, "Ajoutez « Répéter pour chaque élément », et à l’intérieur « Envoyer un message » : le Message et le Numéro de l’élément répété.")
-                    Step(4, "Dans cette action, dépliez le chevron ⟩ et éteignez « Afficher lors de l’exécution » : allumé, il ouvre Messages et attend que vous appuyiez sur envoyer.")
-                    Step(5, "Raccourcis ▸ Automatisation ▸ +, déclencheur « Heure de la journée », 8 h 00, tous les jours, puis « Exécuter le raccourci » et « Ne pas demander ».")
-                    Text("Essayez d’abord sur votre propre numéro. Et l’iPhone doit être allumé à l’heure dite — une automatisation manquée ne se rattrape pas.")
-                        .font(Type.ui(12))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 2)
-                }
-                .padding(.vertical, 6)
+            NavigationLink {
+                GreetingsSetupView()
+            } label: {
+                Label("Envoyer sans y penser", systemImage: "wand.and.stars")
             }
-            .font(Type.ui(14, weight: .semibold))
 
             Button(forgotten ? "Journal du jour effacé" : "Oublier les envois du jour") {
                 GreetingLog.forgetToday()
@@ -213,7 +203,7 @@ struct GreetingsView: View {
             Text("Automatisation")
         } footer: {
             Text(GreetingLog.sentToday() == 0
-                 ? "Le raccourci ne rend une personne qu’une fois par jour. Rien n’est encore parti aujourd’hui."
+                 ? "Le mode d’emploi montre en images le raccourci à obtenir. Une personne n’est rendue qu’une fois par jour : rien n’est encore parti aujourd’hui."
                  : "\(GreetingLog.sentToday()) envoi\(GreetingLog.sentToday() > 1 ? "s" : "") déjà remis au raccourci aujourd’hui. Les oublier permet de relancer l’automatisation.")
         }
     }
@@ -303,30 +293,6 @@ private struct GreetingRow: View {
             }
         }
         .padding(.vertical, 2)
-    }
-}
-
-private struct Step: View {
-    let rank: Int
-    let text: String
-
-    init(_ rank: Int, _ text: String) {
-        self.rank = rank
-        self.text = text
-    }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text("\(rank)")
-                .font(Type.tape(11, weight: .bold))
-                .foregroundStyle(Ink.onAccent)
-                .frame(width: Type.control(20), height: Type.control(20))
-                .background(Circle().fill(Ink.amber))
-            Text(text)
-                .font(Type.ui(12.5))
-                .foregroundStyle(Ink.textSoft)
-                .fixedSize(horizontal: false, vertical: true)
-        }
     }
 }
 

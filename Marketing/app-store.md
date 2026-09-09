@@ -1,4 +1,4 @@
-# Fiche App Store — Blocgenda 1.1 (4)
+# Fiche App Store — Blocgenda 1.2 (5)
 
 Textes prêts à coller dans App Store Connect. Les limites de caractères indiquées
 sont celles d'Apple ; les compteurs ont été vérifiés.

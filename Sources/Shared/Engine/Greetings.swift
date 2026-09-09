@@ -99,6 +99,16 @@ enum Greetings {
         "Bon anniversaire et bonne fête {prenom} ✨ Profite de cette journée deux fois plus."
     ]
 
+    /// Le raccourci « Souhaits du jour », déjà monté, hébergé et signé par
+    /// Apple. L'ouvrir propose de l'installer avec tout son contenu : les
+    /// variables placées, l'envoi dans la boucle, la feuille de composition
+    /// éteinte — c'est-à-dire tout ce qui se monte de travers à la main.
+    ///
+    /// La signature d'Apple expire en octobre 2027 ; le lien meurt aussi si le
+    /// raccourci est retiré de l'iCloud de l'auteur. Le mode d'emploi manuel
+    /// reste donc dans l'application, en repli.
+    static let shortcutLink = URL(string: "https://www.icloud.com/shortcuts/7c783638871f4f7ca8973739dfa69ced")!
+
     static func defaults(for occasion: Occasion) -> [String] {
         switch occasion {
         case .birthday: return birthdayDefaults
