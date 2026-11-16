@@ -135,14 +135,14 @@ Apple les indexe déjà.)*
   Un bouton l'ouvre dans Messages, destinataire et texte déjà écrits.
 • Vous choisissez qui est concerné : les groupes de l'annuaire que vous cochez,
   la famille et les amis plutôt que le garagiste. Aucun groupe coché, rien n'est
-  préparé.
+  préparé, et le carnet d'adresses du téléphone n'est jamais touché.
 • Vous choisissez aussi les mots. Chaque occasion a sa réserve de formules, que
   l'on réécrit à sa main ; Blocgenda en tire une au hasard, en évitant celle
   servie l'an dernier à la même personne.
-• Pour que cela parte sans y penser, l'action « Salutations du jour » s'ajoute à
-  Raccourcis : une automatisation quotidienne envoie les messages à l'heure que
-  vous fixez. Le mode d'emploi tient en cinq étapes, dans Réglages ▸ Annuaire ▸
-  Souhaits.
+• Pour que cela parte sans y penser, l'écran Souhaits installe d'un seul bouton
+  le raccourci tout monté. Ne restent que les trois gestes de l'automatisation
+  quotidienne, dessinés écran par écran — aucune application n'ayant le droit
+  de la créer à votre place.
 • L'écran « Le jour » annonce désormais les fêtes du prénom de vos fiches, et
   l'éphéméride nomme les prénoms fêtés que les jours fériés éclipsent — le
   14 juillet, c'est Camille.
