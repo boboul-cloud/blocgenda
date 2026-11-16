@@ -7,9 +7,22 @@ struct EventEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: AgendaEvent
     @State private var showDeleteConfirm = false
+    @State private var showNewTheme = false
+    @State private var newTheme = ""
 
     init(event: AgendaEvent) {
         _draft = State(initialValue: event)
+    }
+
+    /// Le thème choisi, ramené au nom tel que le menu l'écrit : un rendez-vous
+    /// rangé sous « sante » désigne bien « Santé », et le menu doit s'ouvrir
+    /// dessus plutôt que sur une ligne vide.
+    private var themeChoice: Binding<String?> {
+        Binding {
+            guard draft.hasTheme else { return nil }
+            return store.eventThemes.first { AgendaEvent.themeKey($0) == AgendaEvent.themeKey(draft.themeName) }
+                ?? draft.themeName
+        } set: { draft.theme = $0 }
     }
 
     /// La fiche dont ce rendez-vous est l'anniversaire, si elle est encore là.
@@ -74,6 +87,27 @@ struct EventEditor: View {
                             }
                         }
                     }
+                }
+
+                Section {
+                    Picker("Thème", selection: themeChoice) {
+                        Text("Aucun").tag(String?.none)
+                        ForEach(store.eventThemes, id: \.self) { name in
+                            Text(name).tag(String?.some(name))
+                        }
+                    }
+                    .accessibilityIdentifier("editeur.theme")
+                    Button {
+                        newTheme = ""
+                        showNewTheme = true
+                    } label: {
+                        Label("Nouveau thème…", systemImage: "tag")
+                    }
+                    .accessibilityIdentifier("editeur.nouveautheme")
+                } header: {
+                    Text("Thème")
+                } footer: {
+                    Text("Anniversaire, véhicule, santé… Le thème range le rendez-vous par sujet : l’agenda les retrouve tous d’un geste. Tout thème créé ici est aussitôt proposé aux suivants.")
                 }
 
                 Section("Couleur") {
@@ -147,6 +181,17 @@ struct EventEditor: View {
                     .fontWeight(.semibold)
                     .accessibilityIdentifier("editeur.enregistrer")
                 }
+            }
+            .alert("Nouveau thème", isPresented: $showNewTheme) {
+                TextField("Nom du thème", text: $newTheme)
+                    .accessibilityIdentifier("theme.nom")
+                Button("Ajouter") {
+                    guard let name = store.addEventTheme(newTheme) else { return }
+                    draft.theme = name
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text("Véhicule, école, bateau, impôts… Le thème est aussitôt proposé à tous les rendez-vous, même si celui-ci est le premier à le porter.")
             }
             .confirmationDialog("Supprimer ce rendez-vous ?", isPresented: $showDeleteConfirm,
                                 titleVisibility: .visible) {

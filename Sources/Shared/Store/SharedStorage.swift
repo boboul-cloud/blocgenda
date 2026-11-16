@@ -30,6 +30,7 @@ enum SharedStorage {
         case contacts = "contacts.json"
         case snapshot = "snapshot.json"
         case settings = "settings.json"
+        case journal = "journal.json"
     }
 
     static func url(_ file: File) -> URL {
@@ -88,6 +89,31 @@ struct AppSettings: Codable, Hashable, Sendable {
     /// Optionnel pour la même raison que ci-dessus : la clé manque dans les
     /// fichiers écrits par une version antérieure.
     var customContactGroups: [String]? = nil
+    /// Thèmes de l'agenda créés à la main. Retenus ici, et non déduits des
+    /// rendez-vous, pour qu'un thème encore inemployé reste proposé au menu.
+    /// Optionnel pour la même raison que ci-dessus.
+    var customEventThemes: [String]? = nil
+
+    // MARK: Souhaits d'anniversaire et de fête
+    //
+    // Tous optionnels, pour la même raison que ci-dessus : la clé manque dans
+    // les fichiers écrits par une version antérieure.
+
+    /// Prépare les souhaits du jour pour Raccourcis. Fermé d'origine : un
+    /// message qui part tout seul ne s'active que si on le demande.
+    var greetingsEnabled: Bool? = nil
+    var greetingsIncludeBirthdays: Bool? = nil
+    var greetingsIncludeNameDays: Bool? = nil
+    /// Tiroirs de l'annuaire concernés. Aucun coché, rien ne part : on ne
+    /// souhaite pas son anniversaire au dentiste par distraction.
+    var greetingGroups: [String]? = nil
+    /// Formules personnalisées, par occasion (`Occasion.rawValue`).
+    var greetingFormulas: [String: [String]]? = nil
+
+    var sendsGreetings: Bool { greetingsEnabled == true }
+    var greetsBirthdays: Bool { greetingsIncludeBirthdays ?? true }
+    var greetsNameDays: Bool { greetingsIncludeNameDays ?? true }
+    var greetedGroups: [String] { greetingGroups ?? [] }
 
     /// Lieu réellement utilisé pour les marées.
     var tideReference: Place { tidePort ?? place }

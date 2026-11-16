@@ -14,7 +14,9 @@ Un bloc-notes qui pense comme une additionneuse de comptoir : **une bande de
 papier sans fin** sur laquelle s'impriment, dans l'ordre où ils arrivent, vos
 calculs, vos notes, vos actions et vos rendez-vous. Autour de cette bande,
 l'application donne chaque jour l'état du monde autour de vous : éphéméride,
-lever et coucher du soleil, marée du lieu où vous êtes, lune, météo.
+lever et coucher du soleil, marée du lieu où vous êtes, lune, météo. Et, sur une
+feuille de classeur, un **journal du jour** où déposer ses moments — écrits ou
+dictés — que l'application remet en page selon l'humeur.
 
 Application iOS native, SwiftUI + WidgetKit, entièrement en français.
 
@@ -46,7 +48,7 @@ pas de mauvaise surprise.
 
 ---
 
-## Les quatre écrans
+## Les cinq écrans
 
 ### 1. Rouleau
 
@@ -67,19 +69,54 @@ le bouton `#` en crée une, les pastilles rappellent celles déjà employées.
 Toucher une étiquette sur la bande n'affiche plus qu'elle ; l'éditeur d'une
 ligne permet d'en ajouter après coup.
 
-### 2. Le jour
+### 2. Journal du jour
+
+Une feuille de classeur — réglure bleue, marge rouge, perforations — sur
+laquelle on dépose les moments et les pensées de la journée, **au clavier ou à
+la voix**. Rien n'y est analysé : le journal ne calcule pas et ne prend pas de
+rendez-vous, il retient ce qu'on lui donne, tel quel.
+
+**L'humeur du moment.** Trois mises en page, qu'on change autant de fois qu'on
+veut sans jamais rien perdre :
+
+| Humeur | Ce qu'elle fait de la page |
+| --- | --- |
+| **Posée** | les moments cousus en paragraphes, un titre par demi-journée |
+| **Vive** | une ligne par moment, l'heure en marge, la phrase la plus forte en exergue |
+| **Songeuse** | ni heure ni titre : une pensée en tête de page, le reste au fil de la plume |
+
+La couture est le seul geste que le moteur se permet sur le texte : une
+majuscule au départ de chaque moment, un point à l'arrivée si vous n'en avez
+pas mis. L'écriture tombe sur les lignes — chaque bloc, titre ou citation en
+gros corps compris, occupe un nombre entier de réglures.
+
+**Ce jour-là.** Chaque page retient la journée qu'il faisait : température et
+ciel, lever et coucher, longueur du jour, lune, vent, pleine mer, saint du jour,
+dicton, anniversaires, événement historique. Le relevé est fait une fois pour
+toutes — une page passée garde le sien, c'est tout son intérêt.
+
+On tourne les pages vers le passé (jamais vers l'avenir), on donne un titre à la
+journée, et la liste des moments permet de corriger une dictée mal comprise ou
+de retirer une ligne.
+
+### 3. Le jour
 
 - **Course du soleil** : un arc où le disque avance en temps réel ; lever,
   coucher, durée du jour et l'écart avec la veille (« +3 min qu'hier »).
 - **Marée** : la courbe des 24 heures, les pleines et basses mers avec leur
-  hauteur, le sens de la marée en cours, le marnage, vive-eau / morte-eau.
+  hauteur, le sens de la marée en cours, le marnage, et le **coefficient** —
+  un chiffre par pleine mer, sur l'échelle 20–120, avec ce qu'il vaut en toutes
+  lettres : morte-eau, vive-eau, grande marée.
   Si vous n'êtes pas sur la côte, l'application bascule d'elle-même sur le port
   de référence le plus proche et le dit.
 - **Lune** : phase dessinée, éclairement, âge, lever et coucher, prochaines
   pleine et nouvelle lunes.
 - **Éphéméride** : saint du jour, dicton, jour n° X de l'année, semaine,
-  jours restants, jours fériés (Pâques comprise, calculée), et « ce jour-là ».
-- **Anniversaires** tirés de l'annuaire, avec l'âge et le bouton d'appel.
+  jours restants, jours fériés (Pâques comprise, calculée), « ce jour-là », et
+  les autres prénoms fêtés — ceux qu'un jour férié efface du titre : le
+  14 juillet, c'est Camille.
+- **Anniversaires et fêtes** tirés de l'annuaire, avec l'âge et le bouton
+  d'appel pour les anniversaires, et les fiches dont c'est la fête du prénom.
 - **Lumière** : heure dorée du matin et du soir, heure bleue, nuit noire —
   le créneau des photographes, avec un repère « en cours ».
 - **Activité (pêche & nature)** : périodes solunaires majeures et mineures,
@@ -87,19 +124,33 @@ ligne permet d'en ajouter après coup.
   plus une note du jour sur quatre.
 - **Météo** : température, ressenti, vent en km/h, rose des vents et force Beaufort.
 
-### 3. Agenda
+### 4. Agenda
 
 Bande des sept jours (points de densité sous chaque date, balayage pour changer
 de semaine), liste de la journée, récurrences (quotidien, jours ouvrés,
 hebdomadaire, quinzaine, mensuel, annuel), rappels multiples, couleur, lieu,
 rattachement à un contact.
 
+**Thèmes.** Chaque rendez-vous se range sous un sujet — anniversaire, véhicule,
+santé, maison, papiers… — choisi dans un menu déroulant au bas de sa fiche. Le
+menu propose les thèmes d'office et tous ceux que vous créez, d'où qu'ils
+viennent : la fiche du rendez-vous, l'agenda lui-même, ou *Réglages ▸ Agenda ▸
+Thèmes*. En haut de l'agenda, le bouton **Rechercher un thème** quitte la
+journée pour le sujet : tout ce qui touche à la voiture, prochaine échéance
+d'abord, puis ce qui est déjà passé — chaque rendez-vous une seule fois, à sa
+prochaine date, pour qu'une récurrence quotidienne ne remplisse pas la page. Un
+thème supprimé ne supprime aucun rendez-vous : ils redeviennent sans thème.
+
+Les anniversaires inscrits par l'annuaire n'ont rien à choisir : ils portent le
+thème **Anniversaire** d'office, les anciens comme les nouveaux. Si vous en
+rangez un ailleurs — « Famille » —, il y reste.
+
 **La barre unique est aussi présente ici**, et écrit dans le jour sélectionné :
 sur un jour à venir, « 9h » désigne neuf heures ce jour-là. Ce qu'on écrit
 apparaît sous les rendez-vous, dans une section « Notes et actions » — les
 calculs, eux, restent sur la bande.
 
-### 4. Annuaire
+### 5. Annuaire
 
 Fiches groupées (Famille, Mer, Santé, Maison…), favoris, recherche, et les
 gestes utiles en un pouce : appeler, écrire, envoyer un courriel, ouvrir le plan.
@@ -113,6 +164,31 @@ et on choisit le groupe d'arrivée. Les fiches déjà présentes sont signalées
 défaut sur le courriel, à défaut sur le nom. C'est une **recopie unique**, pas
 une synchronisation : les contacts du téléphone ne sont jamais modifiés, et une
 fiche importée vit ensuite sa vie dans l'annuaire.
+
+**Souhaits d'anniversaire et de fête** (*Réglages ▸ Annuaire ▸ Souhaits*) :
+Blocgenda rapproche chaque jour les fiches de l'annuaire du calendrier des
+postes — la date de naissance pour l'anniversaire, le prénom pour la fête, les
+variantes et les prénoms composés compris — et prépare un message pour chacun.
+Une formule est tirée d'une réserve que l'on modifie librement (`{prenom}` et
+`{age}` sont remplacés), en évitant celle servie la fois précédente à la même
+personne.
+
+Deux règles tiennent le tout :
+
+- **rien ne concerne le carnet d'adresses du téléphone** : seules les fiches de
+  l'annuaire de Blocgenda sont fêtées ;
+- **seuls les groupes cochés** sont concernés — la famille et les amis, pas le
+  garagiste. Aucun groupe coché, rien n'est préparé.
+
+L'envoi se fait d'un bouton, qui ouvre Messages avec le destinataire et le texte
+déjà écrits. Pour que cela parte sans y penser, l'action **« Salutations du
+jour »** est exposée à Raccourcis. L'écran *Souhaits ▸ Envoyer sans y penser*
+installe le raccourci tout monté — variables placées, envoi dans la boucle,
+feuille de composition éteinte — d'un seul bouton ; ne reste que
+l'automatisation « Heure de la journée », trois gestes, qu'aucune application
+n'a le droit de créer à votre place. Le montage à la main reste décrit, en
+images, pour qui en aurait besoin. Une personne n'est rendue au raccourci qu'une fois par jour,
+même si l'automatisation se déclenche deux fois.
 
 ---
 
@@ -138,6 +214,10 @@ fiche importée vit ensuite sa vie dans l'annuaire.
 **Liens profonds** : `blocgenda://rouleau`, `blocgenda://jour`,
 `blocgenda://agenda`, `blocgenda://annuaire`, `blocgenda://reglages` —
 utilisables depuis Raccourcis.
+
+**Actions pour Raccourcis** : *Salutations du jour* — les personnes de
+l'annuaire à féliciter aujourd'hui, avec leur numéro et un message prêt à
+envoyer (voir *Annuaire*).
 
 ---
 
@@ -216,7 +296,7 @@ project.yml                     description du projet (XcodeGen)
 Resources/                      Info.plist, entitlements, catalogue d'assets, icône
 Sources/
   Shared/                       compilé dans l'app ET dans le widget
-    Models/                     TapeEntry, AgendaEvent, Contact, Place
+    Models/                     TapeEntry, AgendaEvent, Contact, Place, JournalPage
     Engine/
       Calculator.swift          analyseur d'expressions (descente récursive)
       SmartInput.swift          reconnaissance d'intention + dates en français
@@ -224,12 +304,13 @@ Sources/
       Solunar.swift             périodes d'activité
       Tides.swift               marées (Open-Meteo) + détection des étales
       Weather.swift             météo (Open-Meteo)
+      JournalLayout.swift       mise en page du journal selon l'humeur
     Data/Ephemeris.swift        saints, dictons, jours fériés, « ce jour-là »
     Store/                      état, persistance, photographie pour le widget
     Services/                   position, notifications, App Intent, chargeur du jour
     Design/Theme.swift          couleurs, typographie, papier, bord déchiré
                                 (charte claire : `Ink`, échelle de corps : `Type`)
-  App/                          les quatre écrans + réglages
+  App/                          les cinq écrans + réglages
   Widget/                       widgets écran d'accueil et écran verrouillé
 Tools/                          générateur d'icône, tests du moteur
 ```
@@ -253,7 +334,15 @@ aux pictogrammes, aux boutons et à la place réservée sous les écrans. Le ré
 « Taille du texte » d'iOS s'ajoute par-dessus, borné à +30 % pour que les
 colonnes chiffrées de la bande restent alignées.
 
-**Persistance.** Quatre fichiers JSON dans le conteneur du groupe d'app, plus
+**L'écriture sur les lignes.** La réglure du journal n'est pas un décor posé
+derrière le texte : c'est elle qui commande la mise en page. La police est
+mesurée une fois (`Ruling`), l'interligne demandé à SwiftUI vaut exactement une
+réglure, et chaque bloc — titre de moment, citation en gros corps, cartouche —
+est complété jusqu'à la réglure suivante avant que le suivant ne commence. Un
+texte d'un autre corps est remonté ou poussé vers la réglure la plus proche,
+faute de quoi un trait lui passerait au travers.
+
+**Persistance.** Cinq fichiers JSON dans le conteneur du groupe d'app, plus
 une `snapshot.json` compacte que le widget lit sans réveiller l'application.
 L'écriture est différée de 400 ms pour que la frappe au clavier ne provoque pas
 un accès disque à chaque caractère. Si le groupe d'app n'est pas disponible
@@ -275,14 +364,26 @@ pour une éphéméride.
 
 - Les hauteurs de marée sont données **par rapport au niveau moyen de la mer**,
   d'après un modèle de prévision. C'est bon pour organiser sa journée ; **pour
-  naviguer, utilisez l'annuaire officiel des marées (SHOM)**. L'indication
-  vive-eau / morte-eau est déduite de la phase de la lune, ce n'est pas le
-  coefficient officiel.
+  naviguer, utilisez l'annuaire officiel des marées (SHOM)**.
+- Le **coefficient** est calculé sur l'appareil d'après les positions du soleil
+  et de la lune, puis calé sur les coefficients officiels du SHOM (2015, 2024,
+  2025, 2026 — 1 461 jours) : écart type 1,5 point, 96 % des journées à moins de
+  trois points, jamais plus de six. Ce n'est pas le coefficient officiel. Il ne
+  s'affiche que sur la façade Manche–Atlantique, seule côte où cette échelle
+  française a cours ; ailleurs, la fiche s'en tient à la vive-eau lue sur la
+  lune.
 - La couverture marine d'Open-Meteo s'arrête au large des côtes : à l'intérieur
   des terres, l'application propose le port de référence le plus proche parmi
   les vingt-cinq embarqués (métropole et outre-mer).
 - La répétition mensuelle se cale sur le quantième : un événement du 31 ne tombe
   pas dans les mois courts.
+- **Aucune application iOS n'a le droit d'envoyer un SMS toute seule.**
+  Blocgenda prépare les souhaits ; c'est Raccourcis qui les envoie, et
+  l'automatisation ne part que si l'iPhone est allumé à l'heure dite — une
+  matinée manquée ne se rattrape pas.
+- Le calendrier des prénoms fêtés est celui « des postes », avec des variantes
+  ajoutées à la main : la liste est forcément incomplète, et se complète au fil
+  des prénoms manqués.
 - iOS plafonne les notifications locales en attente à 64 ; Blocgenda en
   programme au plus 56 pour les rendez-vous, sur trois semaines glissantes, et
   reconstruit la file à chaque modification.

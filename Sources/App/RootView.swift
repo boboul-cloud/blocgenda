@@ -1,13 +1,14 @@
 import SwiftUI
 
 enum Tab: String, CaseIterable, Identifiable {
-    case roll, day, agenda, directory
+    case roll, journal, day, agenda, directory
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .roll: return "Rouleau"
+        case .journal: return "Journal"
         case .day: return "Le jour"
         case .agenda: return "Agenda"
         case .directory: return "Annuaire"
@@ -17,6 +18,7 @@ enum Tab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .roll: return "scroll"
+        case .journal: return "book.closed"
         case .day: return "sun.horizon"
         case .agenda: return "calendar"
         case .directory: return "person.text.rectangle"
@@ -30,6 +32,7 @@ enum Tab: String, CaseIterable, Identifiable {
     var deepLink: String {
         switch self {
         case .roll: return "rouleau"
+        case .journal: return "journal"
         case .day: return "jour"
         case .agenda: return "agenda"
         case .directory: return "annuaire"
@@ -44,6 +47,7 @@ enum Tab: String, CaseIterable, Identifiable {
     var iconFilled: String {
         switch self {
         case .roll: return "scroll.fill"
+        case .journal: return "book.closed.fill"
         case .day: return "sun.horizon.fill"
         case .agenda: return "calendar"
         case .directory: return "person.text.rectangle.fill"
@@ -63,6 +67,7 @@ struct RootView: View {
             Group {
                 switch nav.tab {
                 case .roll: RollView()
+                case .journal: JournalView()
                 case .day: TodayView()
                 case .agenda: AgendaView()
                 case .directory: DirectoryView()

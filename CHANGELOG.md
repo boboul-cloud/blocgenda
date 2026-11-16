@@ -3,6 +3,148 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et la
 numérotation [SemVer](https://semver.org/lang/fr/).
 
+## [1.2] - 2026-09-09
+
+### Ajouté
+
+- **Souhaits d'anniversaire et de fête.** Blocgenda rapproche chaque jour les
+  fiches de l'annuaire du calendrier des postes — la date de naissance pour
+  l'anniversaire, le prénom pour la fête — et prépare un message pour chacun.
+  La comparaison des prénoms ignore la casse et les accents, accepte les
+  variantes (« Rémi », « Rémy ») et fête un prénom composé avec chacune de ses
+  parties. Deux règles la bordent : **seules les fiches de l'annuaire** sont
+  concernées, jamais le carnet d'adresses du téléphone, et **seuls les groupes
+  cochés** en réglages — aucun groupe coché, rien n'est préparé. La formule est
+  tirée d'une réserve modifiable (`{prenom}` et `{age}` sont remplacés), en
+  évitant celle servie la fois précédente à la même personne. L'envoi se fait
+  d'un bouton, qui ouvre Messages avec le destinataire et le texte déjà écrits ;
+  pour qu'il parte sans y penser, l'action **« Salutations du jour »** est
+  exposée à Raccourcis. Le mode d'emploi, dans *Réglages ▸ Annuaire ▸ Souhaits*,
+  **installe le raccourci tout monté d'un seul bouton** et dessine, écran par
+  écran, les trois gestes de l'automatisation — la seule chose qu'iOS interdit à
+  une application de faire à la place de son utilisateur. Une personne n'est rendue qu'une fois par jour, même si
+  l'automatisation se déclenche deux fois. Tout se fait sur l'appareil : aucune
+  application iOS n'ayant le droit d'envoyer un SMS d'elle-même, Blocgenda
+  prépare, et c'est Raccourcis qui envoie.
+- **Les fêtes du prénom dans l'écran *Le jour*.** La carte des anniversaires
+  accueille les fiches dont c'est la fête, et l'éphéméride nomme les prénoms
+  fêtés que son titre passe sous silence — le 14 juillet, c'est Camille.
+
+- **Coefficient de marée.** La fiche *Marée* de l'écran *Le jour* porte
+  désormais le coefficient, sur l'échelle française de 20 à 120 — un chiffre par
+  pleine mer, comme dans un annuaire — et dit en toutes lettres ce qu'il vaut :
+  morte-eau, vive-eau, grande marée. Il est calculé sur l'appareil, sans réseau,
+  d'après les positions du soleil et de la lune : distance et déclinaison de
+  chaque astre, écart entre les deux, et le retard d'un jour et demi que l'océan
+  met à répondre. Les deux constantes de ce calcul ont été ajustées sur les
+  coefficients officiels du SHOM de 2015, 2024, 2025 et 2026 — mille quatre cent
+  soixante et un jours : l'écart type est de **1,5 point**, 96 % des journées
+  tombent à moins de trois points, aucune au-delà de six. Cela reste une
+  estimation ; pour naviguer, l'annuaire officiel fait foi.
+
+### Modifié
+
+- L'indication **vive-eau / morte-eau** se lit maintenant sur le coefficient là
+  où il y en a un, et non plus sur la seule phase de la lune : la carte ne peut
+  plus annoncer « morte-eau » à côté d'un coefficient de 95.
+- Le coefficient est une convention française : il ne s'affiche que sur la
+  façade **Manche–Atlantique**, où il a cours. En Méditerranée et outre-mer, la
+  fiche s'en tient à la vive-eau lue sur la lune, comme avant.
+
+## [1.1] - 2026-08-09
+
+### Ajouté
+
+- **Thèmes de l'agenda.** La fiche d'un rendez-vous porte désormais un
+  **thème** — anniversaire, véhicule, santé, maison, travail, famille, loisirs,
+  papiers — choisi dans un menu déroulant qui propose les thèmes d'office et
+  tous ceux que l'on crée, depuis la fiche, depuis l'agenda ou depuis
+  *Réglages ▸ Agenda ▸ Thèmes*. En haut de l'agenda, **Rechercher un thème**
+  quitte la journée pour le sujet et rassemble tout ce qui s'y rapporte, la
+  prochaine échéance d'abord, le passé ensuite ; chaque rendez-vous n'y paraît
+  qu'une fois, à sa prochaine date, pour qu'une récurrence quotidienne ne
+  remplisse pas la page à elle seule. Deux noms qui ne diffèrent que par la
+  casse ou les accents désignent le même thème. **Les anniversaires venus de
+  l'annuaire se rangent seuls sous « Anniversaire »** — ceux que l'agenda tient
+  déjà comme ceux qu'une date de naissance y inscrira ; c'est le seul
+  rendez-vous que l'application écrit elle-même, elle le range elle-même. Un
+  anniversaire déplacé à la main sous un autre thème — « Famille », par
+  exemple — y reste, et une modification de la fiche ne l'en sort pas.
+  Retirer un thème ne
+  supprime aucun rendez-vous : ceux qu'il rangeait se retrouvent sans thème.
+
+- **Journal du jour.** Un cinquième écran, sur feuille de classeur : réglure
+  bleue, marge rouge, perforations. On y dépose au fil de la journée des
+  moments et des pensées — au clavier ou dictés — sans que rien ne soit analysé
+  ni rangé ailleurs : le journal ne fait pas de calculs et ne prend pas de
+  rendez-vous. Un moteur remet la page en forme selon **l'humeur du moment**,
+  et l'on peut en changer autant de fois qu'on veut sans rien perdre :
+  *posée* coud les moments en paragraphes, du matin au soir ; *vive* garde une
+  ligne par moment, l'heure en marge, et tire en exergue la phrase la plus
+  forte ; *songeuse* efface les heures et les titres, met une pensée en tête de
+  page et laisse couler le reste. L'écriture tombe sur les lignes : chaque bloc
+  occupe un nombre entier de réglures, y compris les titres et les citations en
+  gros corps. Chaque page **retient la journée qu'il faisait** — température et
+  ciel, lever et coucher, longueur du jour, lune, vent, pleine mer, saint,
+  dicton, anniversaires, « ce jour-là » — relevé une fois pour toutes : dans un
+  an, la météo du 9 août ne se retrouve plus. On tourne les pages vers le passé,
+  jamais vers l'avenir, et la liste des moments permet de corriger une dictée
+  mal comprise ou de retirer une ligne.
+
+### Corrigé
+
+- **La carte d'un rendez-vous découpait ses informations en colonnes.** Le
+  thème, le lieu, la répétition et le rappel se partageaient une seule rangée :
+  dès qu'ils étaient trois ou quatre, ou qu'une adresse un peu longue s'y
+  trouvait, chacun était comprimé jusqu'à empiler ses lettres une par ligne. La
+  rangée passe désormais à la ligne : chaque information garde sa largeur
+  naturelle, le lieu peut prendre deux lignes — une adresse complète tient donc
+  tout entière — et le nom du thème recherché ne se coupe plus dans son
+  bouton.
+
+- **« Voir la fiche » ouvrait l'annuaire sans montrer la personne.** Le lien
+  d'un anniversaire, dans l'agenda, changeait bien d'onglet mais laissait la
+  liste en tête, sans liseré : il fallait chercher la fiche à la main. Chaque
+  tiroir était posé d'un bloc dans la liste, si bien que les fiches qu'il
+  contient n'existaient pas tant que le tiroir n'était pas à l'écran — la visée
+  portait sur une fiche introuvable et ne faisait rien. Les fiches sont
+  désormais posées une à une : celle qu'on demande est amenée au centre, quel
+  que soit son rang dans l'annuaire. Au passage, une visée interrompue — l'onglet
+  qu'on quitte aussitôt — restait en attente et allumait une fiche au hasard
+  d'un passage suivant.
+- **Changer de lieu ne changeait pas la marée.** Un port de marée épinglé — par
+  « Utiliser le port le plus proche » — continuait de servir quel que soit le
+  lieu choisi ensuite, alors qu'il avait justement été retenu comme le plus
+  proche du lieu d'alors. Il suit désormais le lieu, et la fiche annonce
+  « marée : Brest » dès que les heures ne sont pas celles du lieu affiché.
+- **Tirer la liste pour mettre à jour effaçait la marée.** Un relevé manqué
+  remplaçait des heures justes par « Marée indisponible ». La courbe déjà
+  affichée est maintenant conservée, l'échec se dit en un mot au-dessus avec
+  l'heure du dernier relevé, et un simple geste relâché ne compte plus pour une
+  panne. Au passage, toute erreur réseau était rangée sous « hors couverture
+  maritime », ce qui déclenchait un second appel voué à l'échec sur un port de
+  repli : la raison donnée par le service est désormais reprise telle quelle.
+
+- **Les heures de marée avançaient d'environ trois quarts d'heure.** Les
+  hauteurs viennent du modèle océanique global SMOC de Météo-France, dont la
+  maille de huit kilomètres ne résout pas le port : pour Brest, elle tombe à une
+  dizaine de kilomètres au large. Comparé aux annuaires officiels sur douze
+  marées par port, le modèle avançait de 29 à 55 minutes selon l'endroit. Chaque
+  lieu est désormais rattaché à la station calibrée la plus proche, comme un
+  annuaire rattache un port secondaire à un port de référence : l'écart moyen
+  tombe de 44 à 7 minutes. Là où aucune station ne couvre le lieu —
+  Méditerranée, outre-mer — rien n'est corrigé, et la fiche le dit.
+- **Le filtre par groupe de l'annuaire pouvait rester vide.** La liste des
+  tiroirs se construisait à partir d'un ensemble, dont l'ordre de parcours est
+  tiré au sort à chaque démarrage ; deux noms ne différant que par la casse ou
+  les accents donnaient deux entrées jumelles dont une seule contenait les
+  fiches, dans un ordre qui changeait d'un lancement à l'autre. Les tiroirs sont
+  désormais rapprochés par la même règle partout — création, classement, filtre,
+  compte et suppression — et leur ordre ne dépend plus du lancement.
+- **Un groupe accentué se rangeait derrière les Z.** Les sections de l'annuaire
+  se triaient sur l'ordre brut des points de code alors que le filtre triait
+  alphabétiquement : « École » se retrouvait en fin de liste.
+
 ## [1.0] — 2026-08-08
 
 Première version destinée à l'App Store, en **version 1.0, build 1**. Les

@@ -294,6 +294,73 @@ struct Pill: View {
     }
 }
 
+/// Une rangée qui passe à la ligne quand la largeur manque.
+///
+/// Une pile horizontale ordinaire partage la place entre ses éléments et les
+/// comprime jusqu'à découper les mots en colonnes d'une lettre — c'est ce qui
+/// arrivait à la ligne d'informations d'un rendez-vous dès qu'elle portait un
+/// thème, un lieu, une répétition et un rappel, ou une seule adresse un peu
+/// longue. Ici chacun garde sa taille naturelle et se reporte à la ligne
+/// suivante ; celui qui, à lui seul, dépasse la largeur est ramené à la
+/// colonne — c'est à lui de savoir se tronquer.
+struct FlowRow: Layout {
+    var spacing: CGFloat = 6
+    var lineSpacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let lines = lines(subviews, width: width)
+        guard !lines.isEmpty else { return .zero }
+        return CGSize(width: min(width, lines.map(\.width).max() ?? 0),
+                      height: lines.map(\.height).reduce(0, +)
+                              + lineSpacing * CGFloat(lines.count - 1))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize,
+                       subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for line in lines(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for i in line.items {
+                let size = fitted(subviews[i], within: bounds.width)
+                subviews[i].place(at: CGPoint(x: x, y: y + (line.height - size.height) / 2),
+                                  proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += line.height + lineSpacing
+        }
+    }
+
+    private struct FlowLine {
+        var items: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func fitted(_ subview: LayoutSubview, within width: CGFloat) -> CGSize {
+        let ideal = subview.sizeThatFits(.unspecified)
+        guard ideal.width > width else { return ideal }
+        return subview.sizeThatFits(ProposedViewSize(width: width, height: nil))
+    }
+
+    private func lines(_ subviews: Subviews, width: CGFloat) -> [FlowLine] {
+        var result: [FlowLine] = []
+        var current = FlowLine()
+        for i in subviews.indices {
+            let size = fitted(subviews[i], within: width)
+            if !current.items.isEmpty && current.width + spacing + size.width > width {
+                result.append(current)
+                current = FlowLine()
+            }
+            current.width += (current.items.isEmpty ? 0 : spacing) + size.width
+            current.height = max(current.height, size.height)
+            current.items.append(i)
+        }
+        if !current.items.isEmpty { result.append(current) }
+        return result
+    }
+}
+
 // MARK: - Feuilles
 
 extension View {

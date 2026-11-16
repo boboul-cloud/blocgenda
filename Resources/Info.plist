@@ -42,6 +42,10 @@
 	<string>Blocgenda utilise votre position pour calculer les marées, le lever et le coucher du soleil et la météo du lieu où vous vous trouvez.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Blocgenda recopie dans son annuaire les fiches que vous choisissez d’importer. Vos contacts ne sont ni modifiés ni envoyés ailleurs.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Blocgenda écoute le micro seulement quand vous touchez le bouton de dictée, le temps d’écrire votre ligne sur le rouleau.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Blocgenda transcrit ce que vous dictez pour l’inscrire sur le rouleau. La reconnaissance se fait sur l’appareil dès que celui-ci en est capable.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Blocgenda enregistre les morceaux de rouleau que vous déchirez dans vos photos.</string>
 	<key>CFBundleURLTypes</key>

@@ -58,6 +58,14 @@ enum Astro {
         return (declination(L, 0), rightAscension(L, 0))
     }
 
+    /// Distance Terre–Soleil en unités astronomiques. La marée solaire varie
+    /// comme le cube de son inverse : d'où le renflement des marées d'hiver,
+    /// quand la Terre passe au plus près du soleil.
+    static func sunDistanceAU(_ d: Double) -> Double {
+        let M = solarMeanAnomaly(d)
+        return 1.00014 - 0.01671 * cos(M) - 0.00014 * cos(2 * M)
+    }
+
     /// Position apparente du soleil : azimut (0 = sud, sens horaire) et hauteur.
     static func sunPosition(date: Date, lat: Double, lon: Double) -> (azimuth: Double, altitude: Double) {
         let lw = rad * -lon
@@ -161,6 +169,42 @@ enum Astro {
         let dt = 385001 - 20905 * cos(M)
         return (rightAscension(l, b), declination(l, b), dt)
     }
+
+    /// La même position, avec les termes que `moonCoords` laisse tomber.
+    ///
+    /// Pour dessiner un croissant ou lever la lune, la série courte suffit. Le
+    /// coefficient de marée, lui, varie comme le **cube** de la distance : les
+    /// deux termes que le soleil impose à l'orbite lunaire — l'évection et la
+    /// variation, quelque six mille kilomètres à eux deux — font toute la
+    /// différence entre une grande marée ordinaire et une très grande. Sans
+    /// eux, l'estimation manquait cinq points sur les marées d'équinoxe.
+    ///
+    /// Termes principaux de Meeus (chapitre 47), tronqués là où ils cessent de
+    /// peser sur le coefficient.
+    static func moonCoordsFine(_ d: Double) -> (ra: Double, dec: Double, dist: Double) {
+        let L = rad * (218.316 + 13.176396 * d)   // longitude moyenne
+        let M = rad * (134.963 + 13.064993 * d)   // anomalie moyenne de la lune
+        let F = rad * (93.272 + 13.229350 * d)    // distance moyenne au nœud
+        let D = rad * (297.850 + 12.190749 * d)   // élongation moyenne
+        let Ms = rad * (357.529 + 0.985600 * d)   // anomalie moyenne du soleil
+
+        let l = L + rad * (6.289 * sin(M) + 1.274 * sin(2 * D - M) + 0.658 * sin(2 * D)
+                           + 0.214 * sin(2 * M) - 0.186 * sin(Ms) - 0.114 * sin(2 * F))
+        let b = rad * (5.128 * sin(F) + 0.281 * sin(M + F) - 0.278 * sin(F - M))
+        let dist = 385000.56
+            - 20905.355 * cos(M)
+            - 3699.111 * cos(2 * D - M)
+            - 2955.968 * cos(2 * D)
+            - 569.925 * cos(2 * M)
+            + 246.158 * cos(2 * M - 2 * D)
+            - 204.586 * cos(Ms - 2 * D)
+            - 170.733 * cos(M + 2 * D)
+            - 152.138 * cos(M - 2 * D + Ms)
+        return (rightAscension(l, b), declination(l, b), dist)
+    }
+
+    /// Demi-grand axe de l'orbite lunaire, à la même échelle que `moonCoordsFine`.
+    static let meanMoonDistance = 385000.56
 
     static func moonPosition(date: Date, lat: Double, lon: Double) -> (azimuth: Double, altitude: Double, distance: Double, parallacticAngle: Double) {
         let lw = rad * -lon

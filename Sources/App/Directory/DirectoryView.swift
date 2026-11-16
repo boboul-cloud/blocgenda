@@ -21,9 +21,12 @@ struct DirectoryView: View {
 
     private var filtered: [Contact] {
         let needle = query.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+        // Le tiroir demandé est comparé à la clé, et non au nom : une fiche
+        // rangée dans « voisins » appartient bien au tiroir « Voisins ».
+        let wanted = groupFilter.map(Store.contactGroupKey)
         return store.contacts
             .filter { showFavoritesOnly ? $0.isFavorite : true }
-            .filter { groupFilter == nil || $0.group == groupFilter }
+            .filter { wanted == nil || Store.contactGroupKey($0.group) == wanted }
             .filter { contact in
                 guard !needle.isEmpty else { return true }
                 let haystack = "\(contact.fullName) \(contact.company) \(contact.phone) \(contact.email) \(contact.group)"
@@ -33,14 +36,30 @@ struct DirectoryView: View {
             .sorted { $0.sortKey < $1.sortKey }
     }
 
-    private var groups: [(name: String, contacts: [Contact])] {
-        Dictionary(grouping: filtered, by: \.group)
-            .map { (name: $0.key, contacts: $0.value) }
-            .sorted { $0.name < $1.name }
+    /// Les fiches affichées, rangées par tiroir. Les sections suivent l'ordre
+    /// du filtre — `localizedStandardCompare`, et non l'ordre brut des points
+    /// de code, qui rejetait « École » derrière « Zoé » et faisait chercher
+    /// longtemps un tiroir accentué.
+    private func sections(of contacts: [Contact]) -> [DirectorySection] {
+        Dictionary(grouping: contacts) { Store.contactGroupKey($0.group) }
+            .map { DirectorySection(name: $0.value.first?.group ?? $0.key, contacts: $0.value) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Le nombre de fiches par tiroir, en une passe : la barre du filtre en
+    /// réclame un par groupe, et l'annuaire peut compter des centaines de fiches.
+    private var groupCounts: [String: Int] {
+        Dictionary(store.contacts.map { (Store.contactGroupKey($0.group), 1) }, uniquingKeysWith: +)
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Calculés une fois pour toute la passe : `filtered` replie chaque
+        // fiche, et l'annuaire peut en compter des centaines.
+        let visible = filtered
+        let sections = sections(of: visible)
+        let counts = groupCounts
+
+        return VStack(spacing: 0) {
             ScreenHeader(title: "Annuaire",
                          subtitle: "\(store.contacts.count) fiche\(store.contacts.count > 1 ? "s" : "")") {
                 HStack(spacing: 8) {
@@ -77,7 +96,7 @@ struct DirectoryView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
 
-            groupFilterBar
+            groupFilterBar(counts: counts)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
 
@@ -93,22 +112,31 @@ struct DirectoryView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 14, pinnedViews: [.sectionHeaders]) {
-                        if filtered.isEmpty {
-                            EmptyDirectory(searching: !query.isEmpty || groupFilter != nil) {
+                    // Les fiches sont posées une à une dans la pile, et non par
+                    // paquets dans un VStack par tiroir : ce paquet ne faisait
+                    // qu'un seul élément aux yeux de la pile paresseuse, qui
+                    // ignorait donc les fiches tant que le tiroir n'était pas à
+                    // l'écran. Viser l'une d'elles depuis l'agenda ne menait
+                    // alors nulle part — l'annuaire s'ouvrait en tête de liste.
+                    LazyVStack(alignment: .leading, spacing: 8, pinnedViews: [.sectionHeaders]) {
+                        if visible.isEmpty {
+                            // Le tiroir n'est nommé que s'il est seul en cause :
+                            // une recherche ou les favoris expliqueraient tout
+                            // aussi bien la page blanche.
+                            EmptyDirectory(searching: !query.isEmpty || groupFilter != nil,
+                                           emptyGroup: query.isEmpty && !showFavoritesOnly
+                                                       ? groupFilter : nil) {
                                 importing = true
                             }
                         }
-                        ForEach(groups, id: \.name) { group in
+                        ForEach(sections) { group in
                             Section {
-                                VStack(spacing: 8) {
-                                    ForEach(group.contacts) { contact in
-                                        ContactCard(contact: contact,
-                                                    isHighlighted: highlighted == contact.id) {
-                                            editing = contact
-                                        }
-                                        .id(contact.id)
+                                ForEach(group.contacts) { contact in
+                                    ContactCard(contact: contact,
+                                                isHighlighted: highlighted == contact.id) {
+                                        editing = contact
                                     }
+                                    .id(contact.id)
                                 }
                             } header: {
                                 HStack {
@@ -120,7 +148,12 @@ struct DirectoryView: View {
                                         .font(Type.ui(10, weight: .semibold))
                                         .foregroundStyle(Ink.textFaint)
                                 }
-                                .padding(.vertical, 6)
+                                // L'air d'avant se répartit maintenant entre
+                                // l'écart de la pile, resserré pour les fiches,
+                                // et l'en-tête lui-même : le rythme ne change
+                                // pas, et le bandeau épinglé couvre bien les
+                                // fiches qui défilent dessous.
+                                .padding(.vertical, 12)
                                 .padding(.horizontal, 4)
                                 .background(Ink.chassis)
                             }
@@ -173,14 +206,14 @@ struct DirectoryView: View {
     /// Le choix du tiroir. Les groupes vides y figurent aussi, avec leur
     /// compte : un tiroir qu'on vient de créer doit se voir, sinon on le croit
     /// perdu.
-    private var groupFilterBar: some View {
+    private func groupFilterBar(counts: [String: Int]) -> some View {
         HStack(spacing: 8) {
             Menu {
                 Picker("Groupe", selection: $groupFilter) {
                     Text("Tous les groupes (\(store.contacts.count))")
                         .tag(String?.none)
                     ForEach(store.contactGroups, id: \.self) { name in
-                        Text("\(name) (\(count(of: name)))")
+                        Text("\(name) (\(counts[Store.contactGroupKey(name)] ?? 0))")
                             .tag(String?.some(name))
                     }
                 }
@@ -239,7 +272,8 @@ struct DirectoryView: View {
     }
 
     private func count(of group: String) -> Int {
-        store.contacts.count { $0.group == group }
+        let key = Store.contactGroupKey(group)
+        return store.contacts.count { Store.contactGroupKey($0.group) == key }
     }
 
     /// Amène à l'écran la fiche demandée par un autre onglet — l'anniversaire
@@ -255,21 +289,28 @@ struct DirectoryView: View {
         if !query.isEmpty { query = "" }
         if showFavoritesOnly { showFavoritesOnly = false }
         if groupFilter != nil { groupFilter = nil }
-        // Le temps que la liste se remette en place avant de viser.
-        try? await Task.sleep(for: .milliseconds(120))
-        guard !Task.isCancelled else { return }
-        withAnimation(.snappy) {
-            proxy.scrollTo(id, anchor: .center)
-            highlighted = id
-        }
-        // L'extinction ne dépend plus de cette tâche-ci : la remise à zéro de
-        // la demande, juste après, l'interromprait.
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2.5))
-            guard highlighted == id else { return }
-            withAnimation(.easeOut(duration: 0.4)) { highlighted = nil }
-        }
+        // Le liseré n'attend pas la visée : il désigne la fiche dès maintenant,
+        // et sert ensuite de témoin — tant qu'il porte cet identifiant, c'est
+        // que la demande est toujours la nôtre.
+        withAnimation(.snappy) { highlighted = id }
+        // La demande est consommée tout de suite, plutôt qu'au bout du compte :
+        // une visée interrompue — l'onglet qu'on quitte aussitôt — la laissait
+        // en attente, et elle rallumait une fiche au hasard d'un passage
+        // suivant. La suite ne dépend donc plus de cette tâche-ci, que la
+        // remise à zéro interromprait.
         nav.contactToReveal = nil
+        Task { @MainActor in await aim(at: id, with: proxy) }
+    }
+
+    /// Amène la fiche au centre, puis éteint le liseré.
+    private func aim(at id: UUID, with proxy: ScrollViewProxy) async {
+        try? await Task.sleep(for: .milliseconds(240))
+        guard highlighted == id else { return }
+        withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+        try? await Task.sleep(for: .seconds(2.3))
+        // Une demande plus récente a pris la main : celle-ci s'efface.
+        guard highlighted == id else { return }
+        withAnimation(.easeOut(duration: 0.4)) { highlighted = nil }
     }
 
     /// Dit ce qui vient d'entrer dans l'annuaire, puis s'efface.
@@ -291,6 +332,19 @@ struct DirectoryView: View {
             withAnimation(.snappy) { importReport = nil }
         }
     }
+}
+
+/// Un tiroir et ses fiches, tels que la liste les affiche.
+///
+/// Une structure nommée plutôt qu'un n-uplet : un n-uplet ne peut être ni
+/// `Identifiable` ni `Equatable`, si bien que `ForEach` n'avait pour toute
+/// prise que le nom du groupe et gardait à l'écran des sections dont le
+/// contenu avait changé sous lui.
+private struct DirectorySection: Identifiable, Equatable {
+    var name: String
+    var contacts: [Contact]
+
+    var id: String { Store.contactGroupKey(name) }
 }
 
 struct ContactCard: View {
@@ -435,6 +489,9 @@ struct Avatar: View {
 
 struct EmptyDirectory: View {
     var searching: Bool
+    /// Tiroir affiché seul et qui ne contient rien : on le nomme, plutôt que
+    /// de laisser croire à une panne devant une page blanche.
+    var emptyGroup: String? = nil
     var onImport: (() -> Void)? = nil
 
     var body: some View {
@@ -442,8 +499,10 @@ struct EmptyDirectory: View {
             Image(systemName: searching ? "person.fill.questionmark" : "person.crop.rectangle.stack")
                 .font(Type.icon(26, weight: .light))
                 .foregroundStyle(Ink.textFaint)
-            Text(searching ? "Aucune fiche trouvée." : "L’annuaire est vide.")
+            Text(emptyGroup.map { "Le groupe « \($0) » ne contient aucune fiche." }
+                 ?? (searching ? "Aucune fiche trouvée." : "L’annuaire est vide."))
                 .font(Type.ui(14, weight: .medium))
+                .multilineTextAlignment(.center)
                 .foregroundStyle(Ink.textSoft)
             if !searching {
                 Text("Ajoutez vos numéros utiles : famille,\nmédecin, capitainerie, garage…")

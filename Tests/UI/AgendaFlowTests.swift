@@ -98,6 +98,72 @@ final class AgendaFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts[titre].waitForExistence(timeout: 5))
     }
 
+    /// Fait défiler la fiche jusqu'à l'élément voulu. La fiche est une liste
+    /// paresseuse : ce qui n'a jamais été à l'écran n'existe pas encore, et
+    /// chercher le thème sans descendre ne donnerait rien.
+    @discardableResult
+    private func scrollTo(_ element: XCUIElement, tries: Int = 8) -> Bool {
+        // Le geste porte sur la fiche elle-même, et non sur l'écran : le
+        // clavier ouvert occupe le bas, et un balayage lancé au milieu de
+        // l'écran ne fait pas toujours défiler la liste.
+        let fiche = app.collectionViews.firstMatch
+        for _ in 0..<tries {
+            if element.exists { return true }
+            if fiche.exists { fiche.swipeUp() } else { app.swipeUp() }
+        }
+        return element.exists
+    }
+
+    /// Le parcours du thème, de bout en bout : on range un rendez-vous sous un
+    /// sujet depuis sa fiche, puis on le retrouve par la recherche de l'agenda
+    /// — sans savoir quel jour il tombe, ce qui est tout l'intérêt.
+    func testRangerUnRendezVousSousUnThemeEtLeRetrouver() throws {
+        openAgenda()
+        let titre = uniqueTitle("Essai thème")
+
+        app.buttons["agenda.nouveau"].tap()
+        let champ = app.textFields["editeur.titre"]
+        XCTAssertTrue(champ.waitForExistence(timeout: 5))
+        champ.tap()
+        champ.typeText(titre)
+        // On referme le clavier : tant qu'un champ a le focus, la fiche
+        // remonte d'elle-même sur lui et refuse de défiler.
+        champ.typeText("\n")
+
+        let choix = app.buttons["editeur.theme"]
+        XCTAssertTrue(scrollTo(choix),
+                      "La fiche du rendez-vous ne propose pas de thème.")
+        choix.tap()
+
+        let sante = app.buttons["Santé"]
+        XCTAssertTrue(sante.waitForExistence(timeout: 3),
+                      "Le menu déroulant des thèmes ne s'ouvre pas.")
+        sante.tap()
+
+        app.buttons["editeur.enregistrer"].tap()
+        XCTAssertTrue(app.staticTexts[titre].waitForExistence(timeout: 5),
+                      "Le rendez-vous saisi n'apparaît pas dans la journée.")
+
+        // La recherche, maintenant : on quitte le jour pour le sujet.
+        let recherche = app.buttons["agenda.theme"]
+        XCTAssertTrue(recherche.waitForExistence(timeout: 3),
+                      "L'agenda n'offre pas de recherche par thème.")
+        recherche.tap()
+
+        let entree = app.buttons.containing(
+            NSPredicate(format: "label BEGINSWITH %@", "Santé")).firstMatch
+        XCTAssertTrue(entree.waitForExistence(timeout: 3),
+                      "Le thème employé ne figure pas dans le menu de recherche.")
+        entree.tap()
+
+        XCTAssertTrue(app.staticTexts[titre].waitForExistence(timeout: 5),
+                      "La recherche par thème ne retrouve pas le rendez-vous rangé sous « Santé ».")
+
+        // Et l'on revient au jour sans rien perdre.
+        app.buttons["agenda.theme.fermer"].tap()
+        XCTAssertTrue(app.buttons["agenda.nouveau"].waitForExistence(timeout: 3))
+    }
+
     /// La barre du rouleau doit aussi fonctionner depuis l'agenda.
     func testSaisirUneLigneDepuisLaBarreDeLAgenda() throws {
         openAgenda()
